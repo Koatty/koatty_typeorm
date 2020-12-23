@@ -3,7 +3,7 @@
  * @Usage:
  * @Author: richen
  * @Date: 2020-12-23 15:19:34
- * @LastEditTime: 2020-12-23 16:36:15
+ * @LastEditTime: 2020-12-23 16:57:22
  */
 import * as Helper from "koatty_lib";
 import { createConnection, Connection } from "typeorm";
@@ -14,11 +14,11 @@ import { createConnection, Connection } from "typeorm";
  * @interface DBServerInterface
  */
 interface DBServerInterface {
-    host: string,
-    port: number,
-    username?: string,
-    password?: string,
-    database?: string,
+    host: string;
+    port: number;
+    username?: string;
+    password?: string;
+    database?: string;
 }
 
 /**
@@ -27,8 +27,8 @@ interface DBServerInterface {
  * @interface ReplicationInterface
  */
 interface ReplicationInterface {
-    master: DBServerInterface,
-    slaves: DBServerInterface[]
+    master: DBServerInterface;
+    slaves: DBServerInterface[];
 }
 
 /**
@@ -37,11 +37,11 @@ interface ReplicationInterface {
  * @interface OptionsInterface
  */
 interface OptionsInterface {
-    type: string,
-    replication: ReplicationInterface,
-    synchronize?: boolean,
-    logging?: boolean,
-    entities?: any[],
+    type: string;
+    replication: ReplicationInterface;
+    synchronize?: boolean;
+    logging?: boolean;
+    entities?: any[];
 }
 
 /**
@@ -69,7 +69,7 @@ const defaultOptions: OptionsInterface = {
     "synchronize": false, //true 每次运行应用程序时实体都将与数据库同步
     "logging": true,
     "entities": []
-}
+};
 
 /**
  *
@@ -85,7 +85,7 @@ export async function TypeORMPlugin(options: OptionsInterface, app: any) {
         return createConnection(opt).then((connection: Connection) => {
             Helper.define(app, 'DBConnection', connection);
         });
-    }
+    };
 
     await dbInit();
     Helper.define(app, 'DBInit', dbInit);
