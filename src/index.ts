@@ -3,7 +3,7 @@
  * @Usage:
  * @Author: richen
  * @Date: 2020-12-23 15:19:34
- * @LastEditTime: 2020-12-23 16:57:22
+ * @LastEditTime: 2020-12-23 17:59:25
  */
 import * as Helper from "koatty_lib";
 import { createConnection, Connection } from "typeorm";
@@ -78,7 +78,7 @@ const defaultOptions: OptionsInterface = {
  * @param {OptionsInterface} options
  * @param {*} app Koatty or Koa instance
  */
-export async function TypeORMPlugin(options: OptionsInterface, app: any) {
+const plugin = async function (options: OptionsInterface, app: any) {
     const opt: any = { ...defaultOptions, ...options };
     // dbInit
     const dbInit = function () {
@@ -89,4 +89,7 @@ export async function TypeORMPlugin(options: OptionsInterface, app: any) {
 
     await dbInit();
     Helper.define(app, 'DBInit', dbInit);
-}
+};
+
+
+export default plugin;

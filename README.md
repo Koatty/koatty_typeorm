@@ -1,19 +1,28 @@
 # koatty_typeorm
 TypeORM plugin for Koatty.
 
-## 安装
+# 安装
+-----
 
-```shell
+```
 npm i koatty_typeorm
 ```
 
-## 使用
+# 使用
+-----
 
-新建插件 TypeormPlugin:
+## Koatty
+
+1、项目中增加plugin
+
+```shell
+koatty plugin Typeorm;
+```
+
+2、修改 plugin/TypeormPlugin.ts:
 
 ```javascript
-// src/plugin/TypeormPlugin.ts
-import { IPlugin, Plugin, Koatty } from 'koatty';
+import { Koatty, Plugin, IPlugin } from "koatty";
 import typeorm from 'koatty_typeorm';
 
 @Plugin()
@@ -23,7 +32,9 @@ export class TypeormPlugin implements IPlugin {
   }
 }
 ```
-配置插件属性并加载:
+
+3、项目plugin配置 config/plugin.ts:
+
 ```
 // src/config/plugin.ts
 export default {
