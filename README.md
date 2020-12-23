@@ -1,2 +1,2 @@
 # koatty_typeorm
-TypeORM middleware for Koatty.
+TypeORM plugin for Koatty.
