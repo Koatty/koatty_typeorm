@@ -3,11 +3,23 @@
  * @Usage:
  * @Author: richen
  * @Date: 2020-12-23 15:19:34
- * @LastEditTime: 2020-12-23 17:59:25
+ * @LastEditTime: 2020-12-24 10:07:47
  */
 import * as Helper from "koatty_lib";
 import { createConnection, Connection } from "typeorm";
 
+/**
+ * Koatty Application
+ *
+ * @export
+ * @interface Application
+ */
+export interface Application {
+    rootPath: string;
+    config(propKey: string, type: string): any;
+    on(event: string, callback: () => void): any;
+    once(event: string, callback: () => void): any;
+}
 /**
  *
  *
@@ -76,9 +88,9 @@ const defaultOptions: OptionsInterface = {
  *
  * @export
  * @param {OptionsInterface} options
- * @param {*} app Koatty or Koa instance
+ * @param {*} app Koatty instance
  */
-const plugin = async function (options: OptionsInterface, app: any) {
+const plugin = async function (options: OptionsInterface, app: Application) {
     const opt: any = { ...defaultOptions, ...options };
     // dbInit
     const dbInit = function () {
