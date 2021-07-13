@@ -3,7 +3,7 @@
  * @Usage:
  * @Author: richen
  * @Date: 2020-12-23 15:19:34
- * @LastEditTime: 2021-07-13 09:49:02
+ * @LastEditTime: 2021-07-13 09:57:41
  */
 import * as Helper from "koatty_lib";
 import { Koatty } from "koatty_core";
@@ -92,5 +92,5 @@ export async function plugin(options: OptionsInterface, app: Koatty) {
         createConnection,
         getConnection,
         getRepository,
-    })
-};
+    });
+}
