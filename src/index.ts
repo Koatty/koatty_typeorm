@@ -3,23 +3,12 @@
  * @Usage:
  * @Author: richen
  * @Date: 2020-12-23 15:19:34
- * @LastEditTime: 2020-12-24 10:07:47
+ * @LastEditTime: 2021-07-13 09:49:02
  */
 import * as Helper from "koatty_lib";
-import { createConnection, Connection } from "typeorm";
+import { Koatty } from "koatty_core";
+import { createConnection, getConnection, getRepository } from "typeorm";
 
-/**
- * Koatty Application
- *
- * @export
- * @interface Application
- */
-export interface Application {
-    rootPath: string;
-    config(propKey: string, type: string): any;
-    on(event: string, callback: () => void): any;
-    once(event: string, callback: () => void): any;
-}
 /**
  *
  *
@@ -80,28 +69,28 @@ const defaultOptions: OptionsInterface = {
     },
     "synchronize": false, //true 每次运行应用程序时实体都将与数据库同步
     "logging": true,
-    "entities": []
+    "entities": [`${process.env.APP_PATH}/model/*`]
 };
+
 
 /**
  *
  *
  * @export
  * @param {OptionsInterface} options
- * @param {*} app Koatty instance
+ * @param {Koatty} app
  */
-const plugin = async function (options: OptionsInterface, app: Application) {
+export async function plugin(options: OptionsInterface, app: Koatty) {
     const opt: any = { ...defaultOptions, ...options };
-    // dbInit
-    const dbInit = function () {
-        return createConnection(opt).then((connection: Connection) => {
-            Helper.define(app, 'DBConnection', connection);
-        });
-    };
+    // 自动在项目目录生成 ormconfig.json
+    app.once("appStart", function () {
+        const data = JSON.stringify(opt);
+        return Helper.writeFile(`${app.appPath}/ormconfig.json`, data);
+    });
 
-    await dbInit();
-    Helper.define(app, 'DBInit', dbInit);
+    Helper.define(app, "DB", {
+        createConnection,
+        getConnection,
+        getRepository,
+    })
 };
-
-
-export default plugin;

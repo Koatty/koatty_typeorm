@@ -15,13 +15,13 @@ npm i koatty_typeorm
 
 1、项目中增加plugin
 
-```shell
+```sh
 koatty plugin Typeorm;
 ```
 
 2、修改 plugin/TypeormPlugin.ts:
 
-```javascript
+```js
 import { Koatty, Plugin, IPlugin } from "koatty";
 import typeorm from 'koatty_typeorm';
 
@@ -35,7 +35,7 @@ export class TypeormPlugin implements IPlugin {
 
 3、项目plugin配置 config/plugin.ts:
 
-```
+```js
 // src/config/plugin.ts
 export default {
   list: ['TypeormPlugin'], // 加载的插件列表,执行顺序按照数组元素顺序
@@ -65,5 +65,55 @@ export default {
     }
   },
 };
+
+```
+4、定义model
+
+```js
+
+import {BaseEntity, Entity, PrimaryGeneratedColumn, Column} from "typeorm";
+
+@Entity()
+export class User extends BaseEntity {
+
+    @PrimaryGeneratedColumn()
+    id: number;
+
+    @Column()
+    firstName: string;
+
+    @Column()
+    lastName: string;
+
+    @Column()
+    isActive: boolean;
+
+    static findByName(firstName: string, lastName: string) {
+        return this.createQueryBuilder("user")
+            .where("user.firstName = :firstName", { firstName })
+            .andWhere("user.lastName = :lastName", { lastName })
+            .getMany();
+    }
+
+}
+```
+
+5、CURD
+
+```js
+// example how to save AR entity
+const user = new User();
+user.firstName = "Timber";
+user.lastName = "Saw";
+user.isActive = true;
+await user.save();
+
+// example how to remove AR entity
+await user.remove();
+
+// example how to load AR entities
+const users = await User.find({ skip: 2, take: 5 });
+const newUsers = await User.find({ isActive: true });
+const timber = await User.findOne({ firstName: "Timber", lastName: "Saw" });
 
 ```
