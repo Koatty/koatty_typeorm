@@ -3,11 +3,13 @@
  * @Usage:
  * @Author: richen
  * @Date: 2020-12-23 15:19:34
- * @LastEditTime: 2021-07-13 09:57:41
+ * @LastEditTime: 2021-11-20 23:52:21
  */
 import * as Helper from "koatty_lib";
 import { Koatty } from "koatty_core";
-import { createConnection, getConnection, getRepository } from "typeorm";
+
+import { createConnection, getConnection, getRepository, Logger, QueryRunner } from "typeorm";
+import { KLogger } from "./logger";
 
 /**
  *
@@ -37,12 +39,14 @@ interface ReplicationInterface {
  *
  * @interface OptionsInterface
  */
-interface OptionsInterface {
+export interface OptionsInterface {
     type: string;
     replication: ReplicationInterface;
     synchronize?: boolean;
     logging?: boolean;
+    logger?: Logger;
     entities?: any[];
+    entityPrefix?: string;
 }
 
 /**
@@ -69,7 +73,8 @@ const defaultOptions: OptionsInterface = {
     },
     "synchronize": false, //true 每次运行应用程序时实体都将与数据库同步
     "logging": true,
-    "entities": [`${process.env.APP_PATH}/model/*`]
+    "entities": [`${process.env.APP_PATH}/model/*`],
+    "entityPrefix": "", //表前缀
 };
 
 
@@ -81,7 +86,12 @@ const defaultOptions: OptionsInterface = {
  * @param {Koatty} app
  */
 export async function plugin(options: OptionsInterface, app: Koatty) {
+    if (Helper.isEmpty(options)) {
+        options = app.config("DataBase", "db");
+    }
     const opt: any = { ...defaultOptions, ...options };
+    opt.logger = opt.logger ?? new KLogger(opt);
+
     // 自动在项目目录生成 ormconfig.json
     app.once("appStart", function () {
         const data = JSON.stringify(opt);
