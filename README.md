@@ -43,25 +43,16 @@ export default {
     TypeormPlugin: {
         //默认配置项
         "type": "mysql", //mysql, mariadb, postgres, sqlite, mssql, oracle, mongodb, cordova
-        replication: {
-            master: {
-                host: "127.0.0.1",
-                port: 3306,
-                username: "test",
-                password: "test",
-                database: "test"
-            },
-            slaves: [{
-                host: "127.0.0.1",
-                port: 3306,
-                username: "test",
-                password: "test",
-                database: "test"
-            }]
-        },
+        host: "127.0.0.1",
+        port: 3306,
+        username: "test",
+        password: "test",
+        database: "test",
+
         "synchronize": false, //true 每次运行应用程序时实体都将与数据库同步
         "logging": true,
-        "entities": [`${process.env.APP_PATH}/model/*`]
+        "entities": [`${process.env.APP_PATH}/model/*`],
+        "entityPrefix": ""
     }
   },
 };

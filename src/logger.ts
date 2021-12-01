@@ -3,11 +3,11 @@
  * @Usage: 
  * @Author: richen
  * @Date: 2021-11-20 23:49:20
- * @LastEditTime: 2021-11-20 23:50:37
+ * @LastEditTime: 2021-11-23 15:34:54
  */
 import { DefaultLogger } from "koatty_logger";
-import { Logger, QueryRunner } from "typeorm";
-import { OptionsInterface } from ".";
+import { ConnectionOptions, Logger, QueryRunner } from "typeorm";
+
 /**
  *
  *
@@ -15,14 +15,14 @@ import { OptionsInterface } from ".";
  * @implements {Logger}
  */
 export class KLogger implements Logger {
-    options: OptionsInterface;
+    options: ConnectionOptions;
 
     /**
      * Creates an instance of KLogger.
-     * @param {OptionsInterface} options
+     * @param {ConnectionOptions} options
      * @memberof KLogger
      */
-    constructor(options: OptionsInterface) {
+    constructor(options: ConnectionOptions) {
         this.options = options;
     }
 
