@@ -75,6 +75,10 @@
     "dependencies": {
         "koatty_core": "^1.x.x",
         "koatty_lib": "^1.x.x",
-        "typeorm": "^0.2.41"
+        "typeorm": "^0.2.44"
+    },
+    "peerDependencies": {
+        "koatty_core": "^1.x.x",
+        "koatty_lib": "^1.x.x"
     }
 }
