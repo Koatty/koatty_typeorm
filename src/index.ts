@@ -3,18 +3,18 @@
  * @Usage:
  * @Author: richen
  * @Date: 2020-12-23 15:19:34
- * @LastEditTime: 2021-12-01 10:37:51
+ * @LastEditTime: 2022-05-27 10:49:07
  */
 import * as Helper from "koatty_lib";
 import { Koatty } from "koatty_core";
 import { KLogger } from "./logger";
-import { createConnection, getConnection, getRepository, ConnectionOptions } from "typeorm";
+import { createConnection, getConnection, getRepository, DataSourceOptions } from "typeorm";
 
 
 /**
  * default options
  */
-const defaultOptions: ConnectionOptions = {
+const defaultOptions: DataSourceOptions = {
     //默认配置项
     "type": "mysql", //mysql, mariadb, postgres, sqlite, mssql, oracle, mongodb, cordova
     host: "127.0.0.1",
@@ -34,10 +34,10 @@ const defaultOptions: ConnectionOptions = {
  *
  *
  * @export
- * @param {ConnectionOptions} options
+ * @param {DataSourceOptions} options
  * @param {Koatty} app
  */
-export async function typeorm(options: ConnectionOptions, app: Koatty) {
+export async function typeorm(options: DataSourceOptions, app: Koatty) {
     if (Helper.isEmpty(options)) {
         options = app.config("DataBase", "db");
     }

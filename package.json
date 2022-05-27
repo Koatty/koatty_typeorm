@@ -6,11 +6,9 @@
         "build": "del-cli --force dist && tsc",
         "eslint": "eslint --ext .ts,.js ./",
         "prepublishOnly": "npm test && npm run build",
+        "prerelease": "npm test && npm run build",
         "release": "npm run prepublishOnly && standard-version",
-        "pub": "git push --follow-tags origin && npm publish",
-        "test": "npm run eslint && jest --passWithNoTests",
-        "test:cov": "jest --collectCoverage --detectOpenHandles",
-        "version": "conventional-changelog -p angular -i CHANGELOG.md -s"
+        "test": "npm run eslint && jest --passWithNoTests"
     },
     "main": "./dist/index.js",
     "repository": {
@@ -47,35 +45,33 @@
         }
     ],
     "devDependencies": {
-        "@babel/core": "^7.x.x",
-        "@babel/plugin-proposal-decorators": "^7.x.x",
-        "@babel/preset-env": "^7.x.x",
-        "@babel/preset-typescript": "^7.x.x",
-        "@commitlint/cli": "^12.x.x",
-        "@commitlint/config-conventional": "^15.x.x",
-        "@grpc/grpc-js": "^1.4.4",
+        "@commitlint/cli": "^17.x.x",
+        "@commitlint/config-conventional": "^17.x.x",
+        "@grpc/grpc-js": "^1.6.7",
         "@types/jest": "^27.x.x",
         "@types/koa": "^2.x.x",
-        "@types/node": "^16.x.x",
-        "@types/ws": "^8.2.0",
+        "@types/koa-static-cache": "^5.x.x",
+        "@types/lru-cache": "^7.x.x",
+        "@types/node": "^17.x.x",
+        "@types/ws": "^8.5.3",
         "@typescript-eslint/eslint-plugin": "^5.x.x",
         "@typescript-eslint/parser": "^5.x.x",
         "conventional-changelog-cli": "^2.x.x",
         "del-cli": "^4.x.x",
         "eslint": "^8.x.x",
-        "eslint-plugin-jest": "^25.x.x",
-        "husky": "^7.x.x",
-        "jest": "^27.x.x",
-        "jest-html-reporters": "^2.x.x",
+        "eslint-plugin-jest": "^26.x.x",
+        "husky": "^4.x.x",
+        "jest": "^28.x.x",
+        "jest-html-reporters": "^3.x.x",
         "standard-version": "^9.x.x",
-        "ts-jest": "^27.x.x",
+        "ts-jest": "^28.x.x",
         "ts-node": "^10.x.x",
         "typescript": "^4.x.x"
     },
     "dependencies": {
         "koatty_core": "^1.x.x",
         "koatty_lib": "^1.x.x",
-        "typeorm": "^0.2.44"
+        "typeorm": "^0.3.6"
     },
     "peerDependencies": {
         "koatty_core": "^1.x.x",
