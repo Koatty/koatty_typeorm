@@ -42,17 +42,17 @@ export default {
   config: { // 插件配置
     TypeormPlugin: {
         //默认配置项
-        "type": "mysql", //mysql, mariadb, postgres, sqlite, mssql, oracle, mongodb, cordova
+        type: "mysql", //mysql, mariadb, postgres, sqlite, mssql, oracle, mongodb, cordova
         host: "127.0.0.1",
         port: 3306,
         username: "test",
         password: "test",
         database: "test",
 
-        "synchronize": false, //true 每次运行应用程序时实体都将与数据库同步
-        "logging": true,
-        "entities": [`${process.env.APP_PATH}/model/*`],
-        "entityPrefix": ""
+        synchronize: false, //true 每次运行应用程序时实体都将与数据库同步
+        logging: true,
+        entities: [`${process.env.APP_PATH}/model/*`],
+        entityPrefix: "", //表前缀
     }
   },
 };
@@ -103,8 +103,8 @@ await user.save();
 await user.remove();
 
 // example how to load AR entities
-const users = await User.find({ skip: 2, take: 5 });
-const newUsers = await User.find({ isActive: true });
-const timber = await User.findOne({ firstName: "Timber", lastName: "Saw" });
+const users = await User.findBy({ skip: 2, take: 5 });
+const newUsers = await User.findBy({ isActive: true });
+const timber = await User.findOneBy({ firstName: "Timber", lastName: "Saw" });
 
 ```

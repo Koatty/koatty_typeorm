@@ -3,12 +3,12 @@
  * @Usage:
  * @Author: richen
  * @Date: 2020-12-23 15:19:34
- * @LastEditTime: 2022-05-27 10:49:07
+ * @LastEditTime: 2022-11-03 16:45:18
  */
 import * as Helper from "koatty_lib";
 import { Koatty } from "koatty_core";
 import { KLogger } from "./logger";
-import { createConnection, getConnection, getRepository, DataSourceOptions } from "typeorm";
+import { DataSource, DataSourceOptions } from "typeorm";
 
 
 /**
@@ -16,17 +16,17 @@ import { createConnection, getConnection, getRepository, DataSourceOptions } fro
  */
 const defaultOptions: DataSourceOptions = {
     //默认配置项
-    "type": "mysql", //mysql, mariadb, postgres, sqlite, mssql, oracle, mongodb, cordova
+    type: "mysql", //mysql, mariadb, postgres, sqlite, mssql, oracle, mongodb, cordova
     host: "127.0.0.1",
     port: 3306,
     username: "test",
     password: "test",
     database: "test",
 
-    "synchronize": false, //true 每次运行应用程序时实体都将与数据库同步
-    "logging": true,
-    "entities": [`${process.env.APP_PATH}/model/*`],
-    "entityPrefix": "", //表前缀
+    synchronize: false, //true 每次运行应用程序时实体都将与数据库同步
+    logging: true,
+    entities: [`${process.env.APP_PATH}/model/*`],
+    entityPrefix: "", //表前缀
 };
 
 
@@ -45,11 +45,11 @@ export async function typeorm(options: DataSourceOptions, app: Koatty) {
     opt.logger = opt.logger ?? new KLogger(opt);
 
     // createConnection
-    await createConnection(opt).then(connection => {
-        app.setMetaData("DB", {
-            connection,
-            getConnection,
-            getRepository,
-        });
+    const db = new DataSource(opt)
+    const conn = await db.initialize();
+    app.setMetaData("DB", {
+        connection: conn,
+        transaction: conn.transaction,
+        getRepository: conn.getRepository,
     });
 }
