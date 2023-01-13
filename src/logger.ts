@@ -3,7 +3,7 @@
  * @Usage: 
  * @Author: richen
  * @Date: 2021-11-20 23:49:20
- * @LastEditTime: 2022-05-27 10:45:56
+ * @LastEditTime: 2023-01-13 12:35:59
  */
 import { DefaultLogger } from "koatty_logger";
 import { DataSourceOptions, Logger, QueryRunner } from "typeorm";
@@ -15,109 +15,109 @@ import { DataSourceOptions, Logger, QueryRunner } from "typeorm";
  * @implements {Logger}
  */
 export class KLogger implements Logger {
-    options: DataSourceOptions;
+  options: DataSourceOptions;
 
-    /**
-     * Creates an instance of KLogger.
-     * @param {ConnectionOptions} options
-     * @memberof KLogger
-     */
-    constructor(options: DataSourceOptions) {
-        this.options = options;
+  /**
+   * Creates an instance of KLogger.
+   * @param {ConnectionOptions} options
+   * @memberof KLogger
+   */
+  constructor(options: DataSourceOptions) {
+    this.options = options;
+  }
+
+  /**
+   *
+   *
+   * @param {string} query
+   * @param {any[]} [parameters]
+   * @param {QueryRunner} [queryRunner]
+   * @memberof KLogger
+   */
+  logQuery(query: string, parameters?: any[], queryRunner?: QueryRunner) {
+    if (this.options.logging) {
+      DefaultLogger.Info(query, parameters);
     }
+  }
 
-    /**
-     *
-     *
-     * @param {string} query
-     * @param {any[]} [parameters]
-     * @param {QueryRunner} [queryRunner]
-     * @memberof KLogger
-     */
-    logQuery(query: string, parameters?: any[], queryRunner?: QueryRunner) {
+  /**
+   *
+   *
+   * @param {(string | Error)} error
+   * @param {string} query
+   * @param {any[]} [parameters]
+   * @param {QueryRunner} [queryRunner]
+   * @memberof KLogger
+   */
+  logQueryError(error: string | Error, query: string, parameters?: any[], queryRunner?: QueryRunner) {
+    if (this.options.logging) {
+      DefaultLogger.Error(query, parameters, error);
+    }
+  }
+
+  /**
+   *
+   *
+   * @param {number} time
+   * @param {string} query
+   * @param {any[]} [parameters]
+   * @param {QueryRunner} [queryRunner]
+   * @memberof KLogger
+   */
+  logQuerySlow(time: number, query: string, parameters?: any[], queryRunner?: QueryRunner) {
+    if (this.options.logging) {
+      DefaultLogger.Warn("QuerySlow", query, parameters, "execution time:", time);
+    }
+  }
+
+  /**
+   *
+   *
+   * @param {string} message
+   * @param {QueryRunner} [queryRunner]
+   * @memberof KLogger
+   */
+  logSchemaBuild(message: string, queryRunner?: QueryRunner) {
+    if (this.options.logging) {
+      DefaultLogger.Info(message);
+    }
+  }
+
+  /**
+   *
+   *
+   * @param {string} message
+   * @param {QueryRunner} [queryRunner]
+   * @memberof KLogger
+   */
+  logMigration(message: string, queryRunner?: QueryRunner) {
+    if (this.options.logging) {
+      DefaultLogger.Info(message);
+    }
+  }
+
+  /**
+   *
+   *
+   * @param {("log" | "info" | "warn")} level
+   * @param {*} message
+   * @param {QueryRunner} [queryRunner]
+   * @memberof KLogger
+   */
+  log(level: "log" | "info" | "warn", message: any, queryRunner?: QueryRunner) {
+    switch (level) {
+      case "log":
+      case "info":
         if (this.options.logging) {
-            DefaultLogger.Info(query, parameters);
+          DefaultLogger.Info(message);
         }
-    }
-
-    /**
-     *
-     *
-     * @param {(string | Error)} error
-     * @param {string} query
-     * @param {any[]} [parameters]
-     * @param {QueryRunner} [queryRunner]
-     * @memberof KLogger
-     */
-    logQueryError(error: string | Error, query: string, parameters?: any[], queryRunner?: QueryRunner) {
+        break;
+      case "warn":
         if (this.options.logging) {
-            DefaultLogger.Error(query, parameters, error);
+          DefaultLogger.Warn(message);
         }
+      default:
+        break;
     }
-
-    /**
-     *
-     *
-     * @param {number} time
-     * @param {string} query
-     * @param {any[]} [parameters]
-     * @param {QueryRunner} [queryRunner]
-     * @memberof KLogger
-     */
-    logQuerySlow(time: number, query: string, parameters?: any[], queryRunner?: QueryRunner) {
-        if (this.options.logging) {
-            DefaultLogger.Warn("QuerySlow", query, parameters, "execution time:", time);
-        }
-    }
-
-    /**
-     *
-     *
-     * @param {string} message
-     * @param {QueryRunner} [queryRunner]
-     * @memberof KLogger
-     */
-    logSchemaBuild(message: string, queryRunner?: QueryRunner) {
-        if (this.options.logging) {
-            DefaultLogger.Info(message);
-        }
-    }
-
-    /**
-     *
-     *
-     * @param {string} message
-     * @param {QueryRunner} [queryRunner]
-     * @memberof KLogger
-     */
-    logMigration(message: string, queryRunner?: QueryRunner) {
-        if (this.options.logging) {
-            DefaultLogger.Info(message);
-        }
-    }
-
-    /**
-     *
-     *
-     * @param {("log" | "info" | "warn")} level
-     * @param {*} message
-     * @param {QueryRunner} [queryRunner]
-     * @memberof KLogger
-     */
-    log(level: "log" | "info" | "warn", message: any, queryRunner?: QueryRunner) {
-        switch (level) {
-            case "log":
-            case "info":
-                if (this.options.logging) {
-                    DefaultLogger.Info(message);
-                }
-                break;
-            case "warn":
-                if (this.options.logging) {
-                    DefaultLogger.Warn(message);
-                }
-            default:
-                break;
-        }
-    }
+  }
 }
