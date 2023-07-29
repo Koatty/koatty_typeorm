@@ -5,9 +5,8 @@
   "scripts": {
     "build": "del-cli --force dist && tsc",
     "eslint": "eslint --ext .ts,.js ./",
-    "prepublishOnly": "npm test && npm run build",
+    "prepublishOnly": "npm test && npm run build && git push --follow-tags origin",
     "prerelease": "npm test && npm run build",
-    "pub": "git push --follow-tags origin && npm publish",
     "release": "npm run prepublishOnly && standard-version",
     "test": "npm run eslint && jest --passWithNoTests"
   },
@@ -77,7 +76,7 @@
     "koatty_core": "^1.x.x",
     "koatty_lib": "^1.x.x",
     "koatty_logger": "^2.x.x",
-    "typeorm": "^0.3.12"
+    "typeorm": "^0.3.17"
   },
   "peerDependencies": {
     "koatty_core": "^1.x.x",
