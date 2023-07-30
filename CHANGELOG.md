@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.3.1](https://github.com/koatty/koatty_typeorm/compare/v1.3.0...v1.3.1) (2023-07-30)
+
+
+### Bug Fixes
+
+* rename ([56ef5d8](https://github.com/koatty/koatty_typeorm/commit/56ef5d83f9af83d1802c37188f50fd78f14385e2))
+
 ## [1.3.0](https://github.com/koatty/koatty_typeorm/compare/v1.2.2...v1.3.0) (2023-07-30)
 
 ### [1.2.2](https://github.com/koatty/koatty_typeorm/compare/v1.2.1...v1.2.2) (2023-07-29)
