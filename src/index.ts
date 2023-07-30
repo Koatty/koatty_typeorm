@@ -3,7 +3,7 @@
  * @Usage:
  * @Author: richen
  * @Date: 2020-12-23 15:19:34
- * @LastEditTime: 2023-01-13 12:35:53
+ * @LastEditTime: 2023-07-30 23:30:05
  */
 import * as Helper from "koatty_lib";
 import { Koatty } from "koatty_core";
@@ -37,7 +37,7 @@ const defaultOptions: DataSourceOptions = {
  * @param {DataSourceOptions} options
  * @param {Koatty} app
  */
-export async function typeorm(options: DataSourceOptions, app: Koatty) {
+export async function KoattyTypeORM(options: DataSourceOptions, app: Koatty) {
   if (Helper.isEmpty(options)) {
     options = app.config("DataBase", "db");
   }
