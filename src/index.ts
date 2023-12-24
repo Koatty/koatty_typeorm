@@ -3,7 +3,7 @@
  * @Usage:
  * @Author: richen
  * @Date: 2020-12-23 15:19:34
- * @LastEditTime: 2023-07-30 23:30:05
+ * @LastEditTime: 2023-12-24 15:03:45
  */
 import * as Helper from "koatty_lib";
 import { Koatty } from "koatty_core";
@@ -27,6 +27,7 @@ const defaultOptions: DataSourceOptions = {
   logging: true,
   entities: [`${process.env.APP_PATH}/model/*`],
   entityPrefix: "", //表前缀
+  timezone: "Z" // 时区。建议设置数据库时区: set global time_zone = '+8:00'; set time_zone = '+8:00';
 };
 
 
