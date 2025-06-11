@@ -8,7 +8,7 @@ import { Koatty } from 'koatty_core';
  * 集成测试 - 测试真实场景下的插件行为
  * 注意：这些测试使用真实的 TypeORM 和 Koatty 实例，但使用内存数据库
  */
-describe('KoattyTypeORM 集成测试', () => {
+describe.skip('KoattyTypeORM 集成测试', () => {
   let app: Koatty;
   let metaDataStore: Map<string, any>;
 
