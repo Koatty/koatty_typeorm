@@ -34,7 +34,7 @@ export class KLogger implements Logger {
    * @param {QueryRunner} [queryRunner]
    * @memberof KLogger
    */
-  logQuery(query: string, parameters?: any[], queryRunner?: QueryRunner) {
+  logQuery(query: string, parameters?: any[], _queryRunner?: QueryRunner) {
     if (this.options.logging) {
       DefaultLogger.Info(query, parameters);
     }
@@ -49,7 +49,7 @@ export class KLogger implements Logger {
    * @param {QueryRunner} [queryRunner]
    * @memberof KLogger
    */
-  logQueryError(error: string | Error, query: string, parameters?: any[], queryRunner?: QueryRunner) {
+  logQueryError(error: string | Error, query: string, parameters?: any[], _queryRunner?: QueryRunner) {
     if (this.options.logging) {
       DefaultLogger.Error(query, parameters, error);
     }
@@ -64,7 +64,7 @@ export class KLogger implements Logger {
    * @param {QueryRunner} [queryRunner]
    * @memberof KLogger
    */
-  logQuerySlow(time: number, query: string, parameters?: any[], queryRunner?: QueryRunner) {
+  logQuerySlow(time: number, query: string, parameters?: any[], _queryRunner?: QueryRunner) {
     if (this.options.logging) {
       DefaultLogger.Warn("QuerySlow", query, parameters, "execution time:", time);
     }
@@ -77,7 +77,7 @@ export class KLogger implements Logger {
    * @param {QueryRunner} [queryRunner]
    * @memberof KLogger
    */
-  logSchemaBuild(message: string, queryRunner?: QueryRunner) {
+  logSchemaBuild(message: string, _queryRunner?: QueryRunner) {
     if (this.options.logging) {
       DefaultLogger.Info(message);
     }
@@ -90,33 +90,35 @@ export class KLogger implements Logger {
    * @param {QueryRunner} [queryRunner]
    * @memberof KLogger
    */
-  logMigration(message: string, queryRunner?: QueryRunner) {
+  logMigration(message: string, _queryRunner?: QueryRunner) {
     if (this.options.logging) {
       DefaultLogger.Info(message);
     }
   }
 
   /**
+   * 通用日志方法
    *
-   *
-   * @param {("log" | "info" | "warn")} level
-   * @param {*} message
-   * @param {QueryRunner} [queryRunner]
+   * @param {("log" | "info" | "warn")} level - 日志级别
+   * @param {*} message - 日志消息
+   * @param {QueryRunner} [queryRunner] - 查询运行器实例
    * @memberof KLogger
    */
-  log(level: "log" | "info" | "warn", message: any, queryRunner?: QueryRunner) {
+  log(level: "log" | "info" | "warn", message: any, _queryRunner?: QueryRunner) {
+    if (!this.options.logging) {
+      return;
+    }
+
     switch (level) {
       case "log":
       case "info":
-        if (this.options.logging) {
-          DefaultLogger.Info(message);
-        }
+        DefaultLogger.Info(message);
         break;
       case "warn":
-        if (this.options.logging) {
-          DefaultLogger.Warn(message);
-        }
+        DefaultLogger.Warn(message);
+        break;
       default:
+        DefaultLogger.Info(message);
         break;
     }
   }
