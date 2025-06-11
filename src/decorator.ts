@@ -427,23 +427,6 @@ export class TransactionAspect implements IAspect {
   }
 
   /**
-   * 在无事务环境中运行
-   */
-  private async runWithoutTransaction(proceed: (...args: any[]) => Promise<any>): Promise<any> {
-    // 在新的异步上下文中运行，不继承事务上下文
-    return await new Promise((resolve, reject) => {
-      setImmediate(async () => {
-        try {
-          const result = await proceed();
-          resolve(result);
-        } catch (error) {
-          reject(error);
-        }
-      });
-    });
-  }
-
-  /**
    * 运行并统计执行时间
    */
   private async runWithStats(proceed: (...args: any[]) => Promise<any>): Promise<any> {
@@ -473,45 +456,6 @@ export class TransactionAspect implements IAspect {
       // 使用AsyncLocalStorage.exit()确保完全脱离事务上下文
       const result = await TransactionManager.runWithoutContext(async () => {
         return await proceed();
-      });
-      success = true;
-      return result;
-    } catch (error) {
-      throw error;
-    } finally {
-      const duration = Date.now() - startTime;
-      TransactionManager.updateStats(duration, success);
-    }
-  }
-
-  /**
-   * 在无事务环境中运行并统计
-   */
-  private async runWithoutTransactionWithStats(proceed: (...args: any[]) => Promise<any>): Promise<any> {
-    const startTime = Date.now();
-    let success = false;
-
-    try {
-      // 在新的异步上下文中运行，不继承事务上下文
-      const result = await new Promise<any>((resolve, reject) => {
-        setImmediate(async () => {
-          try {
-            // 在一个全新的异步上下文中执行，确保不继承任何事务上下文
-            const result = await new Promise<any>((innerResolve, innerReject) => {
-              process.nextTick(async () => {
-                try {
-                  const result = await proceed();
-                  innerResolve(result);
-                } catch (error) {
-                  innerReject(error);
-                }
-              });
-            });
-            resolve(result);
-          } catch (error) {
-            reject(error);
-          }
-        });
       });
       success = true;
       return result;
