@@ -36,7 +36,7 @@ export class KLogger implements Logger {
    * @param {QueryRunner} [queryRunner] - 查询运行器实例
    * @memberof KLogger
    */
-  logQuery(query: string, parameters?: any[], queryRunner?: QueryRunner) {
+  logQuery(query: string, parameters?: any[], _queryRunner?: QueryRunner) {
     if (this.loggingEnabled) {
       DefaultLogger.Info(query, parameters);
     }
@@ -51,7 +51,7 @@ export class KLogger implements Logger {
    * @param {QueryRunner} [queryRunner] - 查询运行器实例
    * @memberof KLogger
    */
-  logQueryError(error: string | Error, query: string, parameters?: any[], queryRunner?: QueryRunner) {
+  logQueryError(error: string | Error, query: string, parameters?: any[], _queryRunner?: QueryRunner) {
     if (this.loggingEnabled) {
       DefaultLogger.Error(query, parameters, error);
     }
@@ -66,7 +66,7 @@ export class KLogger implements Logger {
    * @param {QueryRunner} [queryRunner] - 查询运行器实例
    * @memberof KLogger
    */
-  logQuerySlow(time: number, query: string, parameters?: any[], queryRunner?: QueryRunner) {
+  logQuerySlow(time: number, query: string, parameters?: any[], _queryRunner?: QueryRunner) {
     if (this.loggingEnabled) {
       DefaultLogger.Warn("QuerySlow", query, parameters, "execution time:", time);
     }
@@ -79,7 +79,7 @@ export class KLogger implements Logger {
    * @param {QueryRunner} [queryRunner] - 查询运行器实例
    * @memberof KLogger
    */
-  logSchemaBuild(message: string, queryRunner?: QueryRunner) {
+  logSchemaBuild(message: string, _queryRunner?: QueryRunner) {
     if (this.loggingEnabled) {
       DefaultLogger.Info(message);
     }
@@ -92,7 +92,7 @@ export class KLogger implements Logger {
    * @param {QueryRunner} [queryRunner] - 查询运行器实例
    * @memberof KLogger
    */
-  logMigration(message: string, queryRunner?: QueryRunner) {
+  logMigration(message: string, _queryRunner?: QueryRunner) {
     if (this.loggingEnabled) {
       DefaultLogger.Info(message);
     }
@@ -106,7 +106,7 @@ export class KLogger implements Logger {
    * @param {QueryRunner} [queryRunner] - 查询运行器实例
    * @memberof KLogger
    */
-  log(level: "log" | "info" | "warn", message: any, queryRunner?: QueryRunner) {
+  log(level: "log" | "info" | "warn", message: any, _queryRunner?: QueryRunner) {
     switch (level) {
       case "log":
       case "info":
