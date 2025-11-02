@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## 1.4.0 (2025-11-02)
+
+
+### Features
+
+* add test cases for KoattyTypeORM and KLogger ([569d137](https://github.com/koatty/koatty_typeorm/commit/569d13765197efe8c536e195653988b7e05a537c))
+* enhance TypeORM integration with improved logging and connection handling ([6496d19](https://github.com/koatty/koatty_typeorm/commit/6496d19634d8a8d360f5a3381774b87ae92b628c))
+
+
+### Bug Fixes
+
+* rename ([56ef5d8](https://github.com/koatty/koatty_typeorm/commit/56ef5d83f9af83d1802c37188f50fd78f14385e2))
+* rename unused queryRunner parameter to _queryRunner in KLogger methods ([f5eee10](https://github.com/koatty/koatty_typeorm/commit/f5eee10ec98bebbdb0832bd2d730f1cf034e8c98))
+* timezone ([5791377](https://github.com/koatty/koatty_typeorm/commit/5791377fd9bcb474a2390dd231af9d50b0308049))
+
 ### [1.3.1](https://github.com/koatty/koatty_typeorm/compare/v1.3.0...v1.3.1) (2023-07-30)
 
 
