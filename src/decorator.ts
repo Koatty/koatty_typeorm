@@ -31,6 +31,7 @@ export interface TransactionStats {
   averageDuration: number;
   longestTransaction: number;
   shortestTransaction: number;
+  _totalDuration?: number; // 内部使用：总持续时间累计
 }
 
 /**
@@ -89,14 +90,73 @@ export interface TransactionContext {
 }
 
 /**
+ * 全局事务配置
+ */
+export interface GlobalTransactionConfig {
+  /**
+   * 默认事务超时时间（毫秒）
+   */
+  defaultTimeout?: number;
+  
+  /**
+   * 默认事务隔离级别
+   */
+  defaultIsolationLevel?: 'READ_UNCOMMITTED' | 'READ_COMMITTED' | 'REPEATABLE_READ' | 'SERIALIZABLE';
+  
+  /**
+   * 最大事务嵌套深度
+   */
+  maxNestedDepth?: number;
+  
+  /**
+   * 是否启用事务统计
+   */
+  enableStats?: boolean;
+  
+  /**
+   * 是否启用事务日志
+   */
+  enableLogging?: boolean;
+  
+  /**
+   * 上下文清理间隔（毫秒）
+   */
+  cleanupInterval?: number;
+  
+  /**
+   * 上下文最大存活时间（毫秒）
+   */
+  maxContextAge?: number;
+}
+
+/**
  * 改进的事务管理器
  */
 export class TransactionManager {
   private static readonly asyncLocalStorage = new AsyncLocalStorage<TransactionContext>();
   private static readonly contexts = new Map<string, TransactionContext>();
-  private static readonly CLEANUP_INTERVAL = 5 * 60 * 1000; // 5分钟
-  private static readonly MAX_TRANSACTION_DURATION = 30 * 60 * 1000; // 30分钟
   private static cleanupTimer: NodeJS.Timeout;
+  
+  // 全局配置，支持运行时修改
+  private static globalConfig: GlobalTransactionConfig = {
+    defaultTimeout: undefined,
+    defaultIsolationLevel: undefined,
+    maxNestedDepth: 10,
+    enableStats: true,
+    enableLogging: true,
+    cleanupInterval: 5 * 60 * 1000, // 5分钟
+    maxContextAge: 30 * 60 * 1000  // 30分钟
+  };
+  
+  // 兼容性常量（从 globalConfig 读取）
+  private static get CLEANUP_INTERVAL(): number {
+    return this.globalConfig.cleanupInterval || 5 * 60 * 1000;
+  }
+  
+  private static get MAX_TRANSACTION_DURATION(): number {
+    return this.globalConfig.maxContextAge || 30 * 60 * 1000;
+  }
+  
   private static stats: TransactionStats = {
     totalTransactions: 0,
     successfulTransactions: 0,
@@ -112,10 +172,44 @@ export class TransactionManager {
   }
 
   /**
+   * 配置全局事务选项
+   * 
+   * 允许在运行时修改全局事务配置，如默认超时时间、隔离级别等
+   * 
+   * @param {Partial<GlobalTransactionConfig>} config - 部分配置项
+   * @example
+   * TransactionManager.configure({
+   *   defaultTimeout: 5000,
+   *   defaultIsolationLevel: 'READ_COMMITTED',
+   *   maxNestedDepth: 5
+   * });
+   */
+  static configure(config: Partial<GlobalTransactionConfig>): void {
+    this.globalConfig = { ...this.globalConfig, ...config };
+    
+    // 如果修改了清理间隔，重启定时器
+    if (config.cleanupInterval !== undefined) {
+      this.stopCleanupTimer();
+      this.startCleanupTimer();
+    }
+  }
+
+  /**
+   * 获取当前全局配置
+   * 
+   * @returns {Readonly<GlobalTransactionConfig>} 只读的全局配置对象
+   */
+  static getConfig(): Readonly<GlobalTransactionConfig> {
+    return { ...this.globalConfig };
+  }
+
+  /**
    * 获取事务统计信息
    */
   static getStats(): TransactionStats {
-    return { ...this.stats };
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { _totalDuration, ...publicStats } = this.stats;
+    return { ...publicStats };
   }
 
   /**
@@ -128,12 +222,21 @@ export class TransactionManager {
       failedTransactions: 0,
       averageDuration: 0,
       longestTransaction: 0,
-      shortestTransaction: 0
+      shortestTransaction: 0,
+      _totalDuration: 0
     };
   }
 
   /**
-   * 更新统计信息
+   * 更新统计信息（优化版）
+   * 
+   * 优化说明：
+   * 1. 使用增量更新避免重复计算
+   * 2. 使用三元运算符减少条件判断
+   * 3. 缓存 _totalDuration 避免乘法运算
+   * 
+   * @param duration - 事务持续时间（毫秒）
+   * @param success - 事务是否成功
    */
   static updateStats(duration: number, success: boolean): void {
     // 确保至少有1ms的持续时间以避免0值统计
@@ -147,23 +250,27 @@ export class TransactionManager {
       this.stats.failedTransactions++;
     }
 
-    // 更新平均持续时间
-    const totalDuration = this.stats.averageDuration * (this.stats.totalTransactions - 1) + effectiveDuration;
-    this.stats.averageDuration = totalDuration / this.stats.totalTransactions;
+    // 使用增量更新，避免每次重新计算
+    this.stats._totalDuration = (this.stats._totalDuration || 0) + effectiveDuration;
+    this.stats.averageDuration = this.stats._totalDuration / this.stats.totalTransactions;
 
-    // 更新最长和最短事务时间
-    this.stats.longestTransaction = Math.max(this.stats.longestTransaction, effectiveDuration);
+    // 使用三元运算符优化比较
+    this.stats.longestTransaction = effectiveDuration > this.stats.longestTransaction 
+      ? effectiveDuration 
+      : this.stats.longestTransaction;
     
-    // 如果这是第一个事务，直接设置最短时间，否则取最小值
-    if (this.stats.totalTransactions === 1) {
-      this.stats.shortestTransaction = effectiveDuration;
-    } else {
-      this.stats.shortestTransaction = Math.min(this.stats.shortestTransaction, effectiveDuration);
-    }
+    // 优化最短事务时间的更新
+    this.stats.shortestTransaction = this.stats.totalTransactions === 1
+      ? effectiveDuration
+      : (effectiveDuration < this.stats.shortestTransaction ? effectiveDuration : this.stats.shortestTransaction);
   }
 
   /**
-   * 获取连接池状态
+   * 获取数据源连接池状态
+   * 
+   * 返回当前事务上下文关联的数据源状态信息
+   * 
+   * @returns {object|null} 连接池状态对象，包含 isInitialized 和 hasMetadata；如果没有活动上下文则返回 null
    */
   static getConnectionPoolStatus(): any {
     const currentContext = this.getCurrentContext();
@@ -179,13 +286,25 @@ export class TransactionManager {
 
   /**
    * 获取当前事务上下文
+   * 
+   * 从 AsyncLocalStorage 中获取当前异步调用栈的事务上下文
+   * 
+   * @returns {TransactionContext | undefined} 当前事务上下文，如果不在事务中则返回 undefined
    */
   static getCurrentContext(): TransactionContext | undefined {
     return this.asyncLocalStorage.getStore();
   }
 
   /**
-   * 在事务上下文中运行
+   * 在指定事务上下文中运行函数
+   * 
+   * 将事务上下文注入到 AsyncLocalStorage 中，并在该上下文中执行提供的函数
+   * 函数执行完成后会自动清理上下文
+   * 
+   * @template T - 函数返回值类型
+   * @param {TransactionContext} context - 要注入的事务上下文
+   * @param {() => Promise<T>} fn - 要在上下文中执行的函数
+   * @returns {Promise<T>} 函数执行结果
    */
   static async runInContext<T>(context: TransactionContext, fn: () => Promise<T>): Promise<T> {
     this.contexts.set(context.contextId, context);
@@ -198,25 +317,34 @@ export class TransactionManager {
 
   /**
    * 在无事务上下文中运行（确保完全脱离当前事务上下文）
+   * 
+   * 实现原理：
+   * 1. 使用 AsyncLocalStorage.exit() 脱离当前上下文
+   * 2. 不使用 setImmediate，直接执行以保持调用链
+   * 3. 确保异常正确传播
+   * 
+   * @param fn - 要在无事务上下文中执行的函数
+   * @returns Promise<T> 函数执行结果
    */
   static async runWithoutContext<T>(fn: () => Promise<T>): Promise<T> {
-    // 使用AsyncLocalStorage.exit()确保完全脱离当前上下文
-    return await new Promise<T>((resolve, reject) => {
-      setImmediate(() => {
-        this.asyncLocalStorage.exit(async () => {
-          try {
-            const result = await fn();
-            resolve(result);
-          } catch (error) {
-            reject(error);
-          }
-        });
-      });
+    // 使用 exit() 方法完全脱离当前 AsyncLocalStorage 上下文
+    return await this.asyncLocalStorage.exit(async () => {
+      try {
+        return await fn();
+      } catch (error) {
+        // 确保错误正确传播
+        throw error;
+      }
     });
   }
 
   /**
-   * 生成唯一的上下文ID
+   * 生成唯一的事务上下文 ID
+   * 
+   * 使用时间戳和随机字符串组合生成唯一标识符
+   * 格式: tx_{timestamp}_{random9chars}
+   * 
+   * @returns {string} 唯一的上下文 ID
    */
   static generateContextId(): string {
     return `tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -224,6 +352,11 @@ export class TransactionManager {
 
   /**
    * 启动清理定时器
+   * 
+   * 定期清理过期的事务上下文，防止内存泄漏
+   * 使用 unref() 防止定时器阻止 Node.js 进程退出
+   * 
+   * @private
    */
   private static startCleanupTimer(): void {
     this.cleanupTimer = setInterval(() => {
@@ -236,6 +369,10 @@ export class TransactionManager {
 
   /**
    * 清理过期的事务上下文
+   * 
+   * 遍历所有存储的上下文，清理超过 MAX_CONTEXT_AGE 的上下文
+   * 
+   * @private
    */
   private static cleanupExpiredContexts(): void {
     const now = Date.now();
@@ -265,7 +402,9 @@ export class TransactionManager {
   }
 
   /**
-   * 停止清理定时器（用于测试或程序关闭）
+   * 停止清理定时器
+   * 
+   * 清除定时器以防止内存泄漏，通常在应用关闭或测试清理时调用
    */
   static stopCleanupTimer(): void {
     if (this.cleanupTimer) {
@@ -275,17 +414,31 @@ export class TransactionManager {
 
   /**
    * 创建保存点（用于嵌套事务）
+   * 
+   * 保存点命名规则：sp_{contextId}_{depth}
+   * - contextId: 事务上下文唯一标识
+   * - depth: 当前保存点深度（从 0 开始）
+   * 
+   * @param context - 事务上下文
+   * @param _name - 保留参数，未使用
+   * @returns Promise<string> 保存点名称
    */
   static async createSavepoint(context: TransactionContext, _name?: string): Promise<string> {
-    // 总是生成标准格式的保存点名称，即使提供了自定义名称
-    const savepointName = `sp_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+    // 使用上下文ID和深度生成唯一且简洁的保存点名称
+    const savepointName = `sp_${context.contextId}_${context.savepoints.length}`;
     await context.queryRunner.query(`SAVEPOINT ${savepointName}`);
     context.savepoints.push(savepointName);
     return savepointName;
   }
 
   /**
-   * 回滚到保存点
+   * 回滚到指定保存点
+   * 
+   * 将事务状态回滚到指定保存点，并清除该保存点之后创建的所有保存点
+   * 
+   * @param {TransactionContext} context - 事务上下文
+   * @param {string} savepointName - 保存点名称
+   * @returns {Promise<void>}
    */
   static async rollbackToSavepoint(context: TransactionContext, savepointName: string): Promise<void> {
     await context.queryRunner.query(`ROLLBACK TO SAVEPOINT ${savepointName}`);
@@ -299,6 +452,12 @@ export class TransactionManager {
 
   /**
    * 释放保存点
+   * 
+   * 释放指定保存点，表示该保存点成功完成，不再需要回滚
+   * 
+   * @param {TransactionContext} context - 事务上下文
+   * @param {string} savepointName - 保存点名称
+   * @returns {Promise<void>}
    */
   static async releaseSavepoint(context: TransactionContext, savepointName: string): Promise<void> {
     await context.queryRunner.query(`RELEASE SAVEPOINT ${savepointName}`);
@@ -323,8 +482,7 @@ export class TransactionAspect implements IAspect {
   /**
    * 事务切面执行方法
    */
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-  async run(args: any[], proceed?: Function, _aspectOptions?: any): Promise<any> {
+  async run(args: any[], proceed?: (...args: any[]) => Promise<any>, _aspectOptions?: any): Promise<any> {
     if (!proceed) {
       throw new Error('Proceed function is required for transaction aspect');
     }
@@ -332,6 +490,15 @@ export class TransactionAspect implements IAspect {
     const proceedFn = proceed as (...args: any[]) => Promise<any>;
     const txOptions: TransactionOptions = args[0] || {};
     const currentContext = TransactionManager.getCurrentContext();
+    
+    // 应用全局配置的默认值
+    const globalConfig = TransactionManager.getConfig();
+    if (txOptions.timeout === undefined && globalConfig.defaultTimeout) {
+      txOptions.timeout = globalConfig.defaultTimeout;
+    }
+    if (txOptions.isolationLevel === undefined && globalConfig.defaultIsolationLevel) {
+      txOptions.isolationLevel = globalConfig.defaultIsolationLevel;
+    }
 
     // 处理嵌套事务
     if (txOptions.propagation === 'NESTED' && currentContext) {
@@ -356,6 +523,12 @@ export class TransactionAspect implements IAspect {
     options: TransactionOptions,
     proceed: (...args: any[]) => Promise<any>
   ): Promise<any> {
+    // 检查嵌套深度限制
+    const globalConfig = TransactionManager.getConfig();
+    if (globalConfig.maxNestedDepth && parentContext.depth >= globalConfig.maxNestedDepth) {
+      throw new Error(`事务嵌套深度超过限制 (${globalConfig.maxNestedDepth})`);
+    }
+    
     const savepointName = await TransactionManager.createSavepoint(parentContext, options.name);
     
     try {
@@ -468,7 +641,20 @@ export class TransactionAspect implements IAspect {
   }
 
   /**
-   * 创建新事务
+   * 创建新事务（重构版）
+   * 
+   * 将原有的大函数拆分为多个职责单一的小函数：
+   * 1. prepareTransactionContext - 准备事务上下文
+   * 2. connectAndStartTransaction - 连接并启动事务
+   * 3. executeInTransaction - 在事务中执行业务逻辑
+   * 4. commitTransaction - 提交事务
+   * 5. rollbackTransaction - 回滚事务
+   * 6. cleanupTransaction - 清理事务资源
+   * 
+   * @param options - 事务选项
+   * @param proceed - 业务逻辑函数
+   * @param parentContext - 父事务上下文（可选）
+   * @returns Promise<any> 业务逻辑执行结果
    */
   private async createNewTransaction(
     options: TransactionOptions,
@@ -477,8 +663,35 @@ export class TransactionAspect implements IAspect {
   ): Promise<any> {
     const startTime = Date.now();
     let success = false;
+    const context = this.prepareTransactionContext(options, parentContext, startTime);
 
-    // 获取数据源
+    try {
+      await this.connectAndStartTransaction(context, options);
+      const result = await this.executeInTransaction(context, proceed, options);
+      await this.commitTransaction(context, options);
+      success = true;
+      return result;
+    } catch (error) {
+      await this.rollbackTransaction(context, options, error);
+      throw error;
+    } finally {
+      await this.cleanupTransaction(context, startTime, success);
+    }
+  }
+
+  /**
+   * 准备事务上下文
+   * 
+   * @param options - 事务选项
+   * @param parentContext - 父事务上下文
+   * @param startTime - 开始时间
+   * @returns TransactionContext 事务上下文
+   */
+  private prepareTransactionContext(
+    options: TransactionOptions,
+    parentContext: TransactionContext | undefined,
+    startTime: number
+  ): TransactionContext {
     const dbConfig = this.app?.getMetaData?.(options.dataSourceName || 'DB');
     if (!dbConfig || !dbConfig.dataSource) {
       throw new Error(`数据源 '${options.dataSourceName || 'DB'}' 未找到或未初始化`);
@@ -488,8 +701,7 @@ export class TransactionAspect implements IAspect {
     const queryRunner = dataSource.createQueryRunner();
     const contextId = TransactionManager.generateContextId();
 
-    // 创建事务上下文
-    const context: TransactionContext = {
+    return {
       queryRunner,
       dataSource,
       isActive: true,
@@ -500,101 +712,139 @@ export class TransactionAspect implements IAspect {
       savepoints: [],
       depth: parentContext ? parentContext.depth + 1 : 0
     };
+  }
+
+  /**
+   * 连接数据库并启动事务
+   * 
+   * @param context - 事务上下文
+   * @param options - 事务选项
+   */
+  private async connectAndStartTransaction(
+    context: TransactionContext,
+    options: TransactionOptions
+  ): Promise<void> {
+    await context.queryRunner.connect();
+
+    if (options.isolationLevel) {
+      const isolationLevel = options.isolationLevel.replace(/_/g, ' ') as any;
+      await context.queryRunner.startTransaction(isolationLevel);
+    } else {
+      await context.queryRunner.startTransaction();
+    }
+
+    if (options.readOnly) {
+      await context.queryRunner.query('SET TRANSACTION READ ONLY');
+    }
+
+    if (options.hooks?.beforeCommit) {
+      await options.hooks.beforeCommit();
+    }
+  }
+
+  /**
+   * 在事务上下文中执行业务逻辑
+   * 
+   * @param context - 事务上下文
+   * @param proceed - 业务逻辑函数
+   * @param options - 事务选项
+   * @returns Promise<any> 业务逻辑执行结果
+   */
+  private async executeInTransaction(
+    context: TransactionContext,
+    proceed: (...args: any[]) => Promise<any>,
+    options: TransactionOptions
+  ): Promise<any> {
+    const timeoutPromise = this.createTimeoutPromise(options.timeout, context.contextId);
+    const resultPromise = TransactionManager.runInContext(context, proceed);
+    
+    return options.timeout
+      ? await Promise.race([resultPromise, timeoutPromise])
+      : await resultPromise;
+  }
+
+  /**
+   * 提交事务
+   * 
+   * @param context - 事务上下文
+   * @param options - 事务选项
+   */
+  private async commitTransaction(
+    context: TransactionContext,
+    options: TransactionOptions
+  ): Promise<void> {
+    await context.queryRunner.commitTransaction();
+    
+    Logger.Debug(`事务提交成功: ${context.contextId} (${options.name || 'unnamed'})`);
+
+    if (options.hooks?.afterCommit) {
+      try {
+        await options.hooks.afterCommit();
+      } catch (hookError) {
+        Logger.Error(`After commit钩子执行失败: ${hookError.message}`);
+      }
+    }
+  }
+
+  /**
+   * 回滚事务
+   * 
+   * @param context - 事务上下文
+   * @param options - 事务选项
+   * @param _error - 导致回滚的错误（保留参数，未使用）
+   */
+  private async rollbackTransaction(
+    context: TransactionContext,
+    options: TransactionOptions,
+    _error: any
+  ): Promise<void> {
+    if (options.hooks?.beforeRollback) {
+      try {
+        await options.hooks.beforeRollback();
+      } catch (hookError) {
+        Logger.Error(`Before rollback钩子执行失败: ${hookError.message}`);
+      }
+    }
 
     try {
-      await queryRunner.connect();
-
-      // 开始事务
-      if (options.isolationLevel) {
-        const isolationLevel = options.isolationLevel.replace(/_/g, ' ') as any;
-        await queryRunner.startTransaction(isolationLevel);
-      } else {
-        await queryRunner.startTransaction();
+      if (context.queryRunner.isTransactionActive) {
+        await context.queryRunner.rollbackTransaction();
+        Logger.Debug(`事务回滚成功: ${context.contextId} (${options.name || 'unnamed'})`);
       }
+    } catch (rollbackError) {
+      Logger.Error(`事务回滚失败: ${rollbackError.message}`, rollbackError);
+    }
 
-      // 设置只读模式
-      if (options.readOnly) {
-        await queryRunner.query('SET TRANSACTION READ ONLY');
-      }
-
-      // 执行before commit钩子
-      if (options.hooks?.beforeCommit) {
-        await options.hooks.beforeCommit();
-      }
-
-      // 设置超时处理
-      const timeoutPromise = this.createTimeoutPromise(options.timeout, contextId);
-
+    if (options.hooks?.afterRollback) {
       try {
-        // 在事务上下文中执行
-        const resultPromise = TransactionManager.runInContext(context, proceed);
-        
-        const result = options.timeout
-          ? await Promise.race([resultPromise, timeoutPromise])
-          : await resultPromise;
-
-        // 提交事务
-        await queryRunner.commitTransaction();
-        
-        // 执行after commit钩子
-        if (options.hooks?.afterCommit) {
-          try {
-            await options.hooks.afterCommit();
-          } catch (hookError) {
-            Logger.Error(`After commit钩子执行失败: ${hookError.message}`);
-            // after commit钩子失败不应该影响事务结果
-          }
-        }
-        
-        success = true;
-        Logger.Debug(`事务提交成功: ${contextId} (${options.name || 'unnamed'})`);
-        return result;
-
-      } catch (error) {
-        // 执行before rollback钩子
-        if (options.hooks?.beforeRollback) {
-          try {
-            await options.hooks.beforeRollback();
-          } catch (hookError) {
-            Logger.Error(`Before rollback钩子执行失败: ${hookError.message}`);
-          }
-        }
-
-        // 回滚事务
-        try {
-          if (queryRunner.isTransactionActive) {
-            await queryRunner.rollbackTransaction();
-            Logger.Debug(`事务回滚成功: ${contextId} (${options.name || 'unnamed'})`);
-          }
-        } catch (rollbackError) {
-          Logger.Error(`事务回滚失败: ${rollbackError.message}`, rollbackError);
-        }
-
-        // 执行after rollback钩子
-        if (options.hooks?.afterRollback) {
-          try {
-            await options.hooks.afterRollback();
-          } catch (hookError) {
-            Logger.Error(`After rollback钩子执行失败: ${hookError.message}`);
-          }
-        }
-
-        throw error;
+        await options.hooks.afterRollback();
+      } catch (hookError) {
+        Logger.Error(`After rollback钩子执行失败: ${hookError.message}`);
       }
+    }
+  }
 
-    } finally {
-      // 更新统计信息
-      const duration = Date.now() - startTime;
-      TransactionManager.updateStats(duration, success);
+  /**
+   * 清理事务资源
+   * 
+   * @param context - 事务上下文
+   * @param startTime - 事务开始时间
+   * @param success - 事务是否成功
+   */
+  private async cleanupTransaction(
+    context: TransactionContext,
+    startTime: number,
+    success: boolean
+  ): Promise<void> {
+    const duration = Date.now() - startTime;
+    TransactionManager.updateStats(duration, success);
 
-      // 释放查询运行器
-      try {
-        if (!queryRunner.isReleased) {
-          await queryRunner.release();
-        }
-      } catch (releaseError) {
-        Logger.Error(`释放查询运行器失败: ${releaseError.message}`, releaseError);
+    try {
+      if (!context.queryRunner.isReleased) {
+        await context.queryRunner.release();
       }
+    } catch (releaseError) {
+      Logger.Error(`释放查询运行器失败: ${releaseError.message}`, releaseError);
     }
   }
 

@@ -237,7 +237,7 @@ describe('改进版事务装饰器测试', () => {
 
       // 验证创建了保存点
       expect(mockQueryRunner.query).toHaveBeenCalledWith(
-        expect.stringMatching(/^SAVEPOINT sp_\d+_[a-z0-9]+$/)
+        expect.stringMatching(/^SAVEPOINT sp_tx_\d+_[a-z0-9]+_\d+$/)
       );
     });
 
@@ -271,7 +271,7 @@ describe('改进版事务装饰器测试', () => {
 
       // 验证回滚到了保存点
       expect(mockQueryRunner.query).toHaveBeenCalledWith(
-        expect.stringMatching(/^ROLLBACK TO SAVEPOINT sp_\d+_[a-z0-9]+$/)
+        expect.stringMatching(/^ROLLBACK TO SAVEPOINT sp_tx_\d+_[a-z0-9]+_\d+$/)
       );
     });
   });

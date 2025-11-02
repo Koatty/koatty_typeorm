@@ -22,16 +22,25 @@ export function validateDatabaseOptions(options: DataSourceOptions): void {
     throw new Error("数据库类型 (type) 是必需的");
   }
 
-  // 对于SQLite类型的数据库（包括sqlite和better-sqlite3），不需要host配置
-  if (options.type !== "sqlite" && options.type !== "better-sqlite3") {
-    // 使用类型断言来处理不同数据库类型的配置
+  // SQLite 类型数据库（基于文件，不需要 host）
+  const sqliteTypes = ["sqlite", "better-sqlite3", "capacitor", "cordova"];
+  // 不需要 host 的数据库类型
+  const noHostTypes = [...sqliteTypes, "mongodb", "expo"];
+  
+  if (!noHostTypes.includes(options.type)) {
     const opts = options as any;
     if (!opts.host && !opts.url) {
-      throw new Error("数据库主机 (host) 或连接字符串 (url) 是必需的");
+      throw new Error(
+        `数据库类型 '${options.type}' 需要 host 或 url 配置。` +
+        `请在配置中添加 host 属性或使用 url 连接字符串。`
+      );
     }
     
     if (!opts.database && !opts.url) {
-      throw new Error("数据库名称 (database) 或连接字符串 (url) 是必需的");
+      throw new Error(
+        `数据库类型 '${options.type}' 需要 database 或 url 配置。` +
+        `请在配置中添加 database 属性或使用 url 连接字符串。`
+      );
     }
   }
 
@@ -42,22 +51,34 @@ export function validateDatabaseOptions(options: DataSourceOptions): void {
 }
 
 /**
- * default options
+ * 默认数据库配置选项
+ * 
+ * 提供基本的数据库连接配置，可以通过应用配置覆盖
+ * 
+ * @property {string} type - 数据库类型 (mysql, mariadb, postgres, sqlite, mssql, oracle, mongodb, cordova)
+ * @property {string} host - 数据库主机地址
+ * @property {number} port - 数据库端口号
+ * @property {string} username - 数据库用户名
+ * @property {string} password - 数据库密码
+ * @property {string} database - 数据库名称
+ * @property {boolean} synchronize - 是否自动同步实体到数据库（生产环境应设为 false）
+ * @property {boolean} logging - 是否启用 SQL 日志
+ * @property {string[]} entities - 实体文件路径模式
+ * @property {string} entityPrefix - 表名前缀
+ * @property {string} timezone - 时区设置（建议在数据库层面设置时区）
  */
 const defaultOptions: any = {
-  //默认配置项
-  type: "mysql", //mysql, mariadb, postgres, sqlite, mssql, oracle, mongodb, cordova
+  type: "mysql",
   host: "127.0.0.1",
   port: 3306,
   username: "test",
   password: "test",
   database: "test",
-
-  synchronize: false, //true 每次运行应用程序时实体都将与数据库同步
+  synchronize: false,
   logging: true,
   entities: [`${process.env.APP_PATH}/model/*`],
-  entityPrefix: "", //表前缀
-  timezone: "Z" // 时区。建议设置数据库时区: set global time_zone = '+8:00'; set time_zone = '+8:00';
+  entityPrefix: "",
+  timezone: "Z"
 };
 
 /**
@@ -142,5 +163,8 @@ export {
   getCurrentEntityManager,
   isInTransaction,
   TransactionOptions,
-  TransactionContext
+  TransactionContext,
+  GlobalTransactionConfig,
+  TransactionStats,
+  TransactionHooks
 } from './decorator';

@@ -171,7 +171,7 @@ describe('KoattyTypeORM', () => {
       };
 
       await expect(KoattyTypeORM(options, mockApp))
-        .rejects.toThrow('数据库主机 (host) 或连接字符串 (url) 是必需的');
+        .rejects.toThrow(/数据库类型 'mysql' 需要 host 或 url 配置/);
     });
 
     it('应该抛出错误当 MySQL 缺少数据库名称时', async () => {
@@ -181,7 +181,7 @@ describe('KoattyTypeORM', () => {
       };
 
       await expect(KoattyTypeORM(options, mockApp))
-        .rejects.toThrow('数据库名称 (database) 或连接字符串 (url) 是必需的');
+        .rejects.toThrow(/数据库类型 'mysql' 需要 database 或 url 配置/);
     });
 
     it('应该处理数据库连接初始化失败', async () => {
@@ -238,6 +238,50 @@ describe('KoattyTypeORM', () => {
       mockDataSource.initialize.mockResolvedValue(mockConnection);
 
       await expect(KoattyTypeORM(options, mockApp)).resolves.toBe(mockConnection);
+    });
+  });
+
+  describe('增强的配置验证', () => {
+    it('应该允许 MongoDB 不需要 host', async () => {
+      const options: DataSourceOptions = {
+        type: 'mongodb',
+        url: 'mongodb://localhost:27017/test',
+      } as any;
+
+      mockDataSource.initialize.mockResolvedValue(mockConnection);
+
+      await expect(KoattyTypeORM(options, mockApp)).resolves.toBe(mockConnection);
+    });
+
+    it('应该允许 Capacitor SQLite 不需要 host', async () => {
+      const options: DataSourceOptions = {
+        type: 'capacitor',
+        database: 'test.db',
+      } as any;
+
+      mockDataSource.initialize.mockResolvedValue(mockConnection);
+
+      await expect(KoattyTypeORM(options, mockApp)).resolves.toBe(mockConnection);
+    });
+
+    it('应该为 PostgreSQL 缺少 host 时提供详细错误', async () => {
+      const options: DataSourceOptions = {
+        type: 'postgres',
+        database: 'test',
+      };
+
+      await expect(KoattyTypeORM(options, mockApp))
+        .rejects.toThrow(/数据库类型 'postgres' 需要 host 或 url 配置/);
+    });
+
+    it('应该为 PostgreSQL 缺少 database 时提供详细错误', async () => {
+      const options: DataSourceOptions = {
+        type: 'postgres',
+        host: 'localhost',
+      };
+
+      await expect(KoattyTypeORM(options, mockApp))
+        .rejects.toThrow(/数据库类型 'postgres' 需要 database 或 url 配置/);
     });
   });
 

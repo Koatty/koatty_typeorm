@@ -28,7 +28,7 @@
     "koatty"
   ],
   "engines": {
-    "node": ">10.0.0"
+    "node": ">=14.0.0"
   },
   "author": {
     "name": "richenlin",
@@ -75,15 +75,16 @@
     "typescript": "^5.x.x"
   },
   "dependencies": {
-    "koatty_container": "^1.16.0",
-    "koatty_core": "^1.x.x",
-    "koatty_lib": "^1.x.x",
-    "koatty_logger": "^2.x.x",
+    "koatty_container": "^1.17.0",
+    "koatty_core": "^2.0.8-0",
+    "koatty_lib": "^1.4.3",
+    "koatty_logger": "^2.8.1",
     "reflect-metadata": "^0.2.2",
-    "typeorm": "^0.3.24"
+    "typeorm": "^0.3.27"
   },
   "peerDependencies": {
-    "koatty_core": "^1.x.x",
+    "koatty_container": "^1.x.x",
+    "koatty_core": "^2.x.x",
     "koatty_lib": "^1.x.x",
     "koatty_logger": "^2.x.x"
   }
