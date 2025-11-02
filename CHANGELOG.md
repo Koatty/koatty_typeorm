@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.5.0](https://github.com/koatty/koatty_typeorm/compare/v1.3.2...v1.5.0) (2025-11-02)
+
+
+### Features
+
+* add transaction decorator and examples ([b1f9931](https://github.com/koatty/koatty_typeorm/commit/b1f99316270f730486e5e48ed0e61a6076716565))
+* enhance transaction manager with nested transactions, stats tracking, and timeout handling ([5d40c89](https://github.com/koatty/koatty_typeorm/commit/5d40c89dc8a5b3cd1db64cb7427ee4cc9007ddf3))
+* update dependencies and relax commit message validation rules ([0c53d7e](https://github.com/koatty/koatty_typeorm/commit/0c53d7e8e1b6fcfecd0fc3f24990fa56c2c9e5db))
+
 ## [1.4.0](https://github.com/koatty/koatty_typeorm/compare/v1.3.2...v1.4.0) (2025-06-11)
 
 
