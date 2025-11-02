@@ -13,7 +13,10 @@ module.exports = {
     'jest',
   ],
   parserOptions: {
+    ecmaVersion: 2021,
+    sourceType: 'module',
     project: './tsconfig.json',
+    tsconfigRootDir: __dirname,
   },
   env: {
     node: true,
@@ -30,6 +33,10 @@ module.exports = {
     "@typescript-eslint/no-empty-function": "off",
     "@typescript-eslint/no-empty-interface": "off",
     "@typescript-eslint/explicit-module-boundary-types": "off",
+    "@typescript-eslint/no-unused-vars": ["warn", {
+      "argsIgnorePattern": "^_",
+      "varsIgnorePattern": "^_"
+    }],
     "@typescript-eslint/ban-types": ["error",
       {
         "types": {
