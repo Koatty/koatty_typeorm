@@ -6,7 +6,6 @@
     "build": "del-cli --force dist && tsc",
     "eslint": "eslint --ext .ts,.js ./",
     "lock": "npm i --package-lock-only",
-    "prepublishOnly": "npm test && npm run build && git push --follow-tags origin",
     "prerelease": "npm test && npm run build",
     "release": "npm run prepublishOnly && standard-version",
     "test": "npm run eslint && jest --passWithNoTests"
