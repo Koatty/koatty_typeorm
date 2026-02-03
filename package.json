@@ -75,16 +75,16 @@
     "typescript": "^5.x.x"
   },
   "dependencies": {
-    "koatty_container": "^1.16.0",
-    "koatty_core": "^1.x.x",
-    "koatty_lib": "^1.x.x",
-    "koatty_logger": "^2.x.x",
+    "koatty_container": "workspace:*",
+    "koatty_core": "workspace:*",
+    "koatty_lib": "workspace:*",
+    "koatty_logger": "workspace:*",
     "reflect-metadata": "^0.2.2",
-    "typeorm": "^0.3.24"
+    "typeorm": "^0.3.28"
   },
   "peerDependencies": {
-    "koatty_core": "^1.x.x",
-    "koatty_lib": "^1.x.x",
-    "koatty_logger": "^2.x.x"
+    "koatty_core": "workspace:*",
+    "koatty_lib": "workspace:*",
+    "koatty_logger": "workspace:*"
   }
 }
