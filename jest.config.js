@@ -8,6 +8,7 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node', // 测试用例运行环境
+  setupFilesAfterEnv: ['<rootDir>/test/setup.ts'],
   moduleDirectories: ["node_modules", "src"],
   transform: {
     "^.+\\.(js|ts)?$": ['ts-jest', {
