@@ -1,6 +1,6 @@
 {
   "name": "koatty_typeorm",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "TypeORM plugin for Koatty.",
   "scripts": {
     "build": "del-cli --force dist && tsc",
@@ -72,6 +72,7 @@
     "standard-version": "^9.x.x",
     "ts-jest": "^29.x.x",
     "ts-node": "^10.x.x",
+    "tslib": "^2.x.x",
     "typescript": "^5.x.x"
   },
   "dependencies": {
