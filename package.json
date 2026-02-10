@@ -1,16 +1,22 @@
 {
   "name": "koatty_typeorm",
-  "version": "1.4.2",
+  "version": "1.4.4",
   "description": "TypeORM plugin for Koatty.",
   "scripts": {
-    "build": "del-cli --force dist && tsc",
-    "eslint": "eslint --ext .ts,.js ./",
-    "lock": "npm i --package-lock-only",
-    "prerelease": "npm test && npm run build",
-    "release": "npm run prepublishOnly && standard-version",
-    "test": "npm run eslint && jest --passWithNoTests"
+    "build": "tsup && pnpm run build:cp",
+    "clean": "rimraf dist",
+    "lint": "eslint --ext .ts,.js ./src",
+    "test": "pnpm run lint && jest --passWithNoTests",
+    "build:cp": "node ../../scripts/postBuild.js"
   },
   "main": "./dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/koatty/koatty_typeorm.git"
@@ -27,7 +33,7 @@
     "koatty"
   ],
   "engines": {
-    "node": ">10.0.0"
+    "node": ">=18.0.0"
   },
   "author": {
     "name": "richenlin",
@@ -45,34 +51,22 @@
     }
   ],
   "devDependencies": {
-    "@commitlint/cli": "^19.x.x",
-    "@commitlint/config-conventional": "^19.x.x",
     "@grpc/grpc-js": "^1.x.x",
-    "@microsoft/api-documenter": "^7.x.x",
-    "@microsoft/api-extractor": "^7.x.x",
-    "@rollup/plugin-json": "^6.x.x",
-    "@types/jest": "^29.x.x",
+    "@microsoft/api-documenter": "^7.26.x",
+    "@microsoft/api-extractor": "^7.52.x",
+    "@types/jest": "^29.5.x",
     "@types/koa": "^2.x.x",
-    "@types/node": "^24.x.x",
+    "@types/node": "^22.x.x",
     "@types/ws": "^8.x.x",
     "@typescript-eslint/eslint-plugin": "^8.x.x",
     "@typescript-eslint/parser": "^8.x.x",
-    "conventional-changelog-cli": "^5.x.x",
-    "copyfiles": "^2.x.x",
-    "del-cli": "^6.x.x",
     "eslint": "^8.x.x",
     "eslint-plugin-jest": "^28.x.x",
-    "husky": "^4.x.x",
     "jest": "^29.x.x",
     "jest-html-reporters": "^3.x.x",
-    "rollup": "^4.x.x",
-    "rollup-plugin-typescript2": "^0.x.x",
     "sqlite3": "^5.1.7",
-    "standard-version": "^9.x.x",
     "ts-jest": "^29.x.x",
-    "ts-node": "^10.x.x",
-    "tslib": "^2.x.x",
-    "typescript": "^5.x.x"
+    "tslib": "^2.x.x"
   },
   "dependencies": {
     "koatty_container": "workspace:*",
@@ -86,5 +80,6 @@
     "koatty_core": "workspace:*",
     "koatty_lib": "workspace:*",
     "koatty_logger": "workspace:*"
-  }
+  },
+  "types": "./dist/index.d.ts"
 }

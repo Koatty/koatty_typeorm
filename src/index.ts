@@ -141,6 +141,9 @@ export {
   getCurrentQueryRunner,
   getCurrentEntityManager,
   isInTransaction,
+} from './decorator';
+
+export type {
   TransactionOptions,
   TransactionContext
 } from './decorator';
