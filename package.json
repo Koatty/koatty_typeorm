@@ -1,6 +1,6 @@
 {
   "name": "koatty_typeorm",
-  "version": "1.4.4",
+  "version": "1.4.5",
   "description": "TypeORM plugin for Koatty.",
   "scripts": {
     "build": "tsup && pnpm run build:cp",
