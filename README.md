@@ -417,10 +417,10 @@ const customLogger = new KLogger({
 
 3. **内存泄漏**
    ```typescript
-   // 确保正确释放连接
-   app.on('Stop', async () => {
-     await dataSource.destroy();
-   });
+    // 确保正确释放连接
+    app.once(AppEvent.appStop, async () => {
+      await dataSource.destroy();
+    });
    ```
 
 ## 📄 License

@@ -6,7 +6,7 @@
  * @LastEditTime: 2023-12-24 15:03:45
  */
 import { Helper } from "koatty_lib";
-import { Koatty } from "koatty_core";
+import { Koatty, AppEvent } from "koatty_core";
 import { KLogger } from "./logger";
 import { DataSource, DataSourceOptions } from "typeorm";
 import { DefaultLogger as Logger } from "koatty_logger";
@@ -49,9 +49,6 @@ const defaultOptions: any = {
   type: "mysql", //mysql, mariadb, postgres, sqlite, mssql, oracle, mongodb, cordova
   host: "127.0.0.1",
   port: 3306,
-  username: "test",
-  password: "test",
-  database: "test",
 
   synchronize: false, //true 每次运行应用程序时实体都将与数据库同步
   logging: true,
@@ -120,7 +117,7 @@ export async function KoattyTypeORM(options: DataSourceOptions, app: Koatty): Pr
     });
 
     // 添加应用关闭时的清理逻辑
-    app.on('Stop', async () => {
+    app.once(AppEvent.appStop, async () => {
       if (conn.isInitialized) {
         await conn.destroy();
       }
