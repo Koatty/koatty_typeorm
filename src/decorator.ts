@@ -245,7 +245,7 @@ export class TransactionManager {
     Array.from(this.contexts.entries()).forEach(([contextId, context]) => {
       if (now - context.startTime > this.MAX_TRANSACTION_DURATION) {
         expiredContexts.push(contextId);
-        Logger.Warn(`清理过期事务上下文: ${contextId}`);
+        Logger.Warn(`Cleaning up expired transaction context: ${contextId}`);
       }
     });
 
@@ -253,10 +253,10 @@ export class TransactionManager {
       const context = this.contexts.get(contextId);
       if (context && context.queryRunner && !context.queryRunner.isReleased) {
         context.queryRunner.rollbackTransaction().catch(err => {
-          Logger.Error(`回滚过期事务失败: ${err.message}`);
+          Logger.Error(`Failed to rollback expired transaction: ${err.message}`);
         }).finally(() => {
           context.queryRunner.release().catch(err => {
-            Logger.Error(`释放过期查询运行器失败: ${err.message}`);
+            Logger.Error(`Failed to release expired query runner: ${err.message}`);
           });
         });
       }
@@ -276,9 +276,8 @@ export class TransactionManager {
   /**
    * 创建保存点（用于嵌套事务）
    */
-  static async createSavepoint(context: TransactionContext, _name?: string): Promise<string> {
-    // 总是生成标准格式的保存点名称，即使提供了自定义名称
-    const savepointName = `sp_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+  static async createSavepoint(context: TransactionContext, name?: string): Promise<string> {
+    const savepointName = name || `sp_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
     await context.queryRunner.query(`SAVEPOINT ${savepointName}`);
     context.savepoints.push(savepointName);
     return savepointName;
@@ -330,7 +329,7 @@ export class TransactionAspect implements IAspect {
     }
     
     const proceedFn = proceed as (...args: any[]) => Promise<any>;
-    const txOptions: TransactionOptions = args[0] || {};
+    const txOptions: TransactionOptions = _aspectOptions || {};
     const currentContext = TransactionManager.getCurrentContext();
 
     // 处理嵌套事务
@@ -478,10 +477,10 @@ export class TransactionAspect implements IAspect {
     const startTime = Date.now();
     let success = false;
 
-    // 获取数据源
+    // Get DataSource
     const dbConfig = this.app?.getMetaData?.(options.dataSourceName || 'DB');
     if (!dbConfig || !dbConfig.dataSource) {
-      throw new Error(`数据源 '${options.dataSourceName || 'DB'}' 未找到或未初始化`);
+      throw new Error(`Data source '${options.dataSourceName || 'DB'}' not found or not initialized`);
     }
 
     const dataSource: DataSource = dbConfig.dataSource;
@@ -541,13 +540,13 @@ export class TransactionAspect implements IAspect {
           try {
             await options.hooks.afterCommit();
           } catch (hookError) {
-            Logger.Error(`After commit钩子执行失败: ${hookError.message}`);
-            // after commit钩子失败不应该影响事务结果
+            Logger.Error(`After commit hook execution failed: ${hookError.message}`);
+            // After commit hook failure should not affect transaction result
           }
         }
         
         success = true;
-        Logger.Debug(`事务提交成功: ${contextId} (${options.name || 'unnamed'})`);
+        Logger.Debug(`Transaction committed successfully: ${contextId} (${options.name || 'unnamed'})`);
         return result;
 
       } catch (error) {
@@ -556,7 +555,7 @@ export class TransactionAspect implements IAspect {
           try {
             await options.hooks.beforeRollback();
           } catch (hookError) {
-            Logger.Error(`Before rollback钩子执行失败: ${hookError.message}`);
+            Logger.Error(`Before rollback hook execution failed: ${hookError.message}`);
           }
         }
 
@@ -564,10 +563,10 @@ export class TransactionAspect implements IAspect {
         try {
           if (queryRunner.isTransactionActive) {
             await queryRunner.rollbackTransaction();
-            Logger.Debug(`事务回滚成功: ${contextId} (${options.name || 'unnamed'})`);
+            Logger.Debug(`Transaction rolled back successfully: ${contextId} (${options.name || 'unnamed'})`);
           }
         } catch (rollbackError) {
-          Logger.Error(`事务回滚失败: ${rollbackError.message}`, rollbackError);
+          Logger.Error(`Transaction rollback failed: ${rollbackError.message}`, rollbackError);
         }
 
         // 执行after rollback钩子
@@ -575,7 +574,7 @@ export class TransactionAspect implements IAspect {
           try {
             await options.hooks.afterRollback();
           } catch (hookError) {
-            Logger.Error(`After rollback钩子执行失败: ${hookError.message}`);
+            Logger.Error(`After rollback hook execution failed: ${hookError.message}`);
           }
         }
 
@@ -593,7 +592,7 @@ export class TransactionAspect implements IAspect {
           await queryRunner.release();
         }
       } catch (releaseError) {
-        Logger.Error(`释放查询运行器失败: ${releaseError.message}`, releaseError);
+        Logger.Error(`Failed to release query runner: ${releaseError.message}`, releaseError);
       }
     }
   }

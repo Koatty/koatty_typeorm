@@ -69,7 +69,7 @@ describe('简化事务装饰器测试', () => {
       const mockProceed = jest.fn().mockResolvedValue('test result');
       const options: TransactionOptions = {};
 
-      const result = await transactionAspect.run([options], mockProceed);
+      const result = await transactionAspect.run([], mockProceed, options);
 
       expect(mockDataSource.createQueryRunner).toHaveBeenCalled();
       expect(mockQueryRunner.connect).toHaveBeenCalled();
@@ -87,7 +87,7 @@ describe('简化事务装饰器测试', () => {
       const mockProceed = jest.fn().mockRejectedValue(new Error('Test error'));
       const options: TransactionOptions = {};
 
-      await expect(transactionAspect.run([options], mockProceed)).rejects.toThrow('Test error');
+      await expect(transactionAspect.run([], mockProceed, options)).rejects.toThrow('Test error');
 
       expect(mockQueryRunner.rollbackTransaction).toHaveBeenCalled();
       expect(mockQueryRunner.release).toHaveBeenCalled();
@@ -102,7 +102,7 @@ describe('简化事务装饰器测试', () => {
         isolationLevel: 'READ_COMMITTED'
       };
 
-      await transactionAspect.run([options], mockProceed);
+      await transactionAspect.run([], mockProceed, options);
 
       expect(mockQueryRunner.startTransaction).toHaveBeenCalledWith('READ COMMITTED');
     });
@@ -116,7 +116,7 @@ describe('简化事务装饰器测试', () => {
         readOnly: true
       };
 
-      await transactionAspect.run([options], mockProceed);
+      await transactionAspect.run([], mockProceed, options);
 
       expect(mockQueryRunner.query).toHaveBeenCalledWith('SET TRANSACTION READ ONLY');
     });
@@ -130,8 +130,8 @@ describe('简化事务装饰器测试', () => {
       const mockProceed = jest.fn();
       const options: TransactionOptions = {};
 
-      await expect(transactionAspect.run([options], mockProceed))
-        .rejects.toThrow("数据源 'DB' 未找到或未初始化");
+      await expect(transactionAspect.run([], mockProceed, options))
+        .rejects.toThrow("Data source 'DB' not found or not initialized");
     });
   });
 
@@ -145,7 +145,7 @@ describe('简化事务装饰器测试', () => {
 
       // 执行成功事务
       const mockProceed = jest.fn().mockResolvedValue('result');
-      await transactionAspect.run([{}], mockProceed);
+      await transactionAspect.run([], mockProceed, {});
 
       const stats = TransactionManager.getStats();
       expect(stats.totalTransactions).toBe(1);
@@ -195,7 +195,7 @@ describe('简化事务装饰器测试', () => {
         propagation: 'NEVER'
       };
 
-      await expect(transactionAspect.run([options], mockProceed))
+      await expect(transactionAspect.run([], mockProceed, options))
         .rejects.toThrow('Transaction not allowed (NEVER propagation)');
 
       mockGetCurrentContext.mockRestore();
@@ -210,7 +210,7 @@ describe('简化事务装饰器测试', () => {
         propagation: 'MANDATORY'
       };
 
-      await expect(transactionAspect.run([options], mockProceed))
+      await expect(transactionAspect.run([], mockProceed, options))
         .rejects.toThrow('Transaction required (MANDATORY propagation)');
     });
 
@@ -223,7 +223,7 @@ describe('简化事务装饰器测试', () => {
         propagation: 'SUPPORTS'
       };
 
-      const result = await transactionAspect.run([options], mockProceed);
+      const result = await transactionAspect.run([], mockProceed, options);
 
       expect(result).toBe('supports-result');
       expect(mockProceed).toHaveBeenCalled();

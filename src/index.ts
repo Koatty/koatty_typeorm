@@ -12,32 +12,32 @@ import { DataSource, DataSourceOptions } from "typeorm";
 import { DefaultLogger as Logger } from "koatty_logger";
 
 /**
- * 验证数据库配置选项
+ * Validate database configuration options
  * 
- * @param {DataSourceOptions} options - 数据库配置选项
- * @throws {Error} 当配置无效时抛出错误
+ * @param {DataSourceOptions} options - Database configuration options
+ * @throws {Error} Throws error when configuration is invalid
  */
 export function validateDatabaseOptions(options: DataSourceOptions): void {
   if (!options.type) {
-    throw new Error("数据库类型 (type) 是必需的");
+    throw new Error("Database type (type) is required");
   }
 
-  // 对于SQLite类型的数据库（包括sqlite和better-sqlite3），不需要host配置
+  // SQLite databases (including sqlite and better-sqlite3) do not require host configuration
   if (options.type !== "sqlite" && options.type !== "better-sqlite3") {
-    // 使用类型断言来处理不同数据库类型的配置
+    // Use type assertion to handle configuration for different database types
     const opts = options as any;
     if (!opts.host && !opts.url) {
-      throw new Error("数据库主机 (host) 或连接字符串 (url) 是必需的");
+      throw new Error("Database host or connection string (url) is required");
     }
     
     if (!opts.database && !opts.url) {
-      throw new Error("数据库名称 (database) 或连接字符串 (url) 是必需的");
+      throw new Error("Database name or connection string (url) is required");
     }
   }
 
-  // 验证实体路径
+  // Validate entity paths
   if (options.entities && Array.isArray(options.entities) && options.entities.length === 0) {
-    Logger.Warn("警告: 未配置实体路径，可能导致无法加载数据模型");
+    Logger.Warn("Warning: Entity path not configured, may result in inability to load data models");
   }
 }
 
@@ -45,20 +45,20 @@ export function validateDatabaseOptions(options: DataSourceOptions): void {
  * default options
  */
 const defaultOptions: any = {
-  //默认配置项
+  //Default configuration items
   type: "mysql", //mysql, mariadb, postgres, sqlite, mssql, oracle, mongodb, cordova
   host: "127.0.0.1",
   port: 3306,
 
-  synchronize: false, //true 每次运行应用程序时实体都将与数据库同步
+  synchronize: false, //true entities will be synchronized with database every time application runs
   logging: true,
   entities: [`${process.env.APP_PATH}/model/*`],
-  entityPrefix: "", //表前缀
-  timezone: "Z" // 时区。建议设置数据库时区: set global time_zone = '+8:00'; set time_zone = '+8:00';
+  entityPrefix: "", //Table prefix
+  timezone: "Z" // Timezone. Recommended to set database timezone: set global time_zone = '+8:00'; set time_zone = '+8:00';
 };
 
 /**
- * 扩展的数据源配置选项接口
+ * Extended DataSource options interface
  */
 interface ExtendedDataSourceOptions {
   [key: string]: any;
@@ -66,48 +66,48 @@ interface ExtendedDataSourceOptions {
 }
 
 /**
- * 初始化 TypeORM 数据源并集成到 Koatty 应用中
+ * Initialize TypeORM DataSource and integrate into Koatty application
  * 
  * @export
- * @param {DataSourceOptions} options - TypeORM 数据源配置选项
- * @param {Koatty} app - Koatty 应用实例
- * @returns {Promise<DataSource>} 返回初始化后的数据源实例
- * @throws {Error} 当数据库连接失败时抛出错误
+ * @param {DataSourceOptions} options - TypeORM DataSource configuration options
+ * @param {Koatty} app - Koatty application instance
+ * @returns {Promise<DataSource>} Returns initialized DataSource instance
+ * @throws {Error} Throws error when database connection fails
  */
 export async function KoattyTypeORM(options: DataSourceOptions, app: Koatty): Promise<DataSource> {
   try {
-    // 获取配置选项
+    // Get configuration options
     if (Helper.isEmpty(options)) {
       options = app.config("DataBase", "db");
     }
     
-    // 验证必要的配置项
+    // Validate required configuration items
     if (!options) {
-      throw new Error("数据库配置不能为空");
+      throw new Error("Database configuration cannot be empty");
     }
 
-    // 验证配置选项的有效性
+    // Validate configuration options validity
     validateDatabaseOptions(options);
 
-    // 合并配置选项，使用 any 类型来避免类型冲突
+    // Merge configuration options, use any type to avoid type conflicts
     const opt: ExtendedDataSourceOptions = { 
       ...defaultOptions, 
       ...options 
     };
     
-    // 设置自定义日志器
+    // Set custom logger
     opt.logger = opt.logger ?? new KLogger(opt as DataSourceOptions);
 
-    // 创建并初始化数据源，使用类型断言
+    // Create and initialize DataSource, use type assertion
     const db = new DataSource(opt as DataSourceOptions);
     const conn = await db.initialize();
     
-    // 验证连接状态
+    // Validate connection status
     if (!conn.isInitialized) {
-      throw new Error("数据库连接初始化失败");
+      throw new Error("Database connection initialization failed");
     }
 
-    // 将数据库相关方法注入到应用元数据中
+    // Inject database related methods into application metadata
     app.setMetaData("DB", {
       connection: conn,
       dataSource: db,
@@ -116,7 +116,7 @@ export async function KoattyTypeORM(options: DataSourceOptions, app: Koatty): Pr
       manager: conn.manager,
     });
 
-    // 添加应用关闭时的清理逻辑
+    // Add cleanup logic when application shuts down
     app.once(AppEvent.appStop, async () => {
       if (conn.isInitialized) {
         await conn.destroy();
@@ -126,11 +126,11 @@ export async function KoattyTypeORM(options: DataSourceOptions, app: Koatty): Pr
     return conn;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    throw new Error(`TypeORM 初始化失败: ${errorMessage}`);
+    throw new Error(`TypeORM initialization failed: ${errorMessage}`);
   }
 }
 
-// 导出事务装饰器相关功能
+// Export transaction decorator related functionality
 export {
   Transactional,
   TransactionAspect,

@@ -63,7 +63,7 @@ describe('事务装饰器性能测试', () => {
           timeout: 5000
         };
 
-        return await transactionAspect.run([options], mockProceed);
+        return await transactionAspect.run([], mockProceed, options);
       };
 
       const startTime = Date.now();
@@ -125,7 +125,7 @@ describe('事务装饰器性能测试', () => {
         };
 
         try {
-          return await transactionAspect.run([options], mockProceed);
+          return await transactionAspect.run([], mockProceed, options);
         } catch (error) {
           return { error: error.message };
         }
@@ -166,7 +166,7 @@ describe('事务装饰器性能测试', () => {
           timeout: 100
         };
 
-        await transactionAspect.run([options], mockProceed);
+        await transactionAspect.run([], mockProceed, options);
       }
 
       // 验证统计信息
@@ -203,7 +203,7 @@ describe('事务装饰器性能测试', () => {
 
       const startTime = Date.now();
 
-      await expect(transactionAspect.run([options], mockProceed))
+      await expect(transactionAspect.run([], mockProceed, options))
         .rejects.toThrow(`Transaction timeout after ${timeout}ms`);
 
       const actualTime = Date.now() - startTime;
@@ -230,7 +230,7 @@ describe('事务装饰器性能测试', () => {
       for (let i = 0; i < transactionCount; i++) {
         const mockProceed = jest.fn().mockResolvedValue(`result-${i}`);
         const options: TransactionOptions = { name: `perf-test-${i}` };
-        await transactionAspect.run([options], mockProceed);
+        await transactionAspect.run([], mockProceed, options);
       }
       
       const timeWithoutStats = Date.now() - startTimeWithoutStats;
@@ -244,7 +244,7 @@ describe('事务装饰器性能测试', () => {
       for (let i = 0; i < transactionCount; i++) {
         const mockProceed = jest.fn().mockResolvedValue(`result-${i}`);
         const options: TransactionOptions = { name: `perf-test-with-stats-${i}` };
-        await transactionAspect.run([options], mockProceed);
+        await transactionAspect.run([], mockProceed, options);
       }
       
       const timeWithStats = Date.now() - startTimeWithStats;

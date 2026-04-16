@@ -80,14 +80,14 @@ describe('改进版事务装饰器测试', () => {
       // 执行一些成功的事务
       for (let i = 0; i < 5; i++) {
         const mockProceed = jest.fn().mockResolvedValue(`result-${i}`);
-        await transactionAspect.run([{}], mockProceed);
+        await transactionAspect.run([], mockProceed, {});
       }
 
       // 执行一些失败的事务
       for (let i = 0; i < 3; i++) {
         const mockProceed = jest.fn().mockRejectedValue(new Error(`error-${i}`));
         try {
-          await transactionAspect.run([{}], mockProceed);
+          await transactionAspect.run([], mockProceed, {});
         } catch (e) {
           // 忽略错误
         }
@@ -133,7 +133,7 @@ describe('改进版事务装饰器测试', () => {
         return 'result';
       });
 
-      await transactionAspect.run([{}], mockProceed);
+      await transactionAspect.run([], mockProceed, {});
     });
   });
 
@@ -153,7 +153,7 @@ describe('改进版事务装饰器测试', () => {
       const mockProceed = jest.fn().mockResolvedValue('success');
       const options: TransactionOptions = { hooks };
 
-      await transactionAspect.run([options], mockProceed);
+      await transactionAspect.run([], mockProceed, options);
 
       expect(hooks.beforeCommit).toHaveBeenCalled();
       expect(hooks.afterCommit).toHaveBeenCalled();
@@ -175,7 +175,7 @@ describe('改进版事务装饰器测试', () => {
       const mockProceed = jest.fn().mockRejectedValue(new Error('Test error'));
       const options: TransactionOptions = { hooks };
 
-      await expect(transactionAspect.run([options], mockProceed)).rejects.toThrow('Test error');
+      await expect(transactionAspect.run([], mockProceed, options)).rejects.toThrow('Test error');
 
       expect(hooks.beforeCommit).toHaveBeenCalled();
       expect(hooks.afterCommit).not.toHaveBeenCalled();
@@ -198,13 +198,13 @@ describe('改进版事务装饰器测试', () => {
       const mockProceed1 = jest.fn().mockResolvedValue('success');
       
       // after commit钩子错误不应该影响事务结果
-      const result = await transactionAspect.run([{ hooks }], mockProceed1);
+      const result = await transactionAspect.run([], mockProceed1, { hooks });
       expect(result).toBe('success');
 
       // 测试失败事务中回滚钩子的错误
       const mockProceed2 = jest.fn().mockRejectedValue(new Error('Original error'));
       
-      await expect(transactionAspect.run([{ hooks }], mockProceed2))
+      await expect(transactionAspect.run([], mockProceed2, { hooks }))
         .rejects.toThrow('Original error');
     });
   });
@@ -221,7 +221,7 @@ describe('改进版事务装饰器测试', () => {
           name: 'inner-transaction'
         };
 
-        const innerResult = await transactionAspect.run([innerOptions], innerProceed);
+        const innerResult = await transactionAspect.run([], innerProceed, innerOptions);
         expect(innerResult).toBe('inner-result');
 
         return 'outer-result';
@@ -232,12 +232,12 @@ describe('改进版事务装饰器测试', () => {
         name: 'outer-transaction'
       };
 
-      const result = await transactionAspect.run([outerOptions], outerProceed);
+      const result = await transactionAspect.run([], outerProceed, outerOptions);
       expect(result).toBe('outer-result');
 
       // 验证创建了保存点
       expect(mockQueryRunner.query).toHaveBeenCalledWith(
-        expect.stringMatching(/^SAVEPOINT sp_\d+_[a-z0-9]+$/)
+        expect.stringContaining('SAVEPOINT inner-transaction')
       );
     });
 
@@ -253,25 +253,25 @@ describe('改进版事务装饰器测试', () => {
         };
 
         try {
-          await transactionAspect.run([innerOptions], innerProceed);
+          await transactionAspect.run([], innerProceed, innerOptions);
         } catch (error) {
           expect(error.message).toBe('Inner transaction failed');
         }
 
         return 'outer-continues';
-      });
+      };
 
       const outerOptions: TransactionOptions = {
         propagation: 'REQUIRED',
         name: 'outer-transaction'
       };
 
-      const result = await transactionAspect.run([outerOptions], outerProceed);
+      const result = await transactionAspect.run([], outerProceed, outerOptions);
       expect(result).toBe('outer-continues');
 
       // 验证回滚到了保存点
       expect(mockQueryRunner.query).toHaveBeenCalledWith(
-        expect.stringMatching(/^ROLLBACK TO SAVEPOINT sp_\d+_[a-z0-9]+$/)
+        expect.stringContaining('ROLLBACK TO SAVEPOINT failing-inner-transaction')
       );
     });
   });
@@ -287,7 +287,7 @@ describe('改进版事务装饰器测试', () => {
         name: 'readonly-transaction'
       };
 
-      await transactionAspect.run([options], mockProceed);
+      await transactionAspect.run([], mockProceed, options);
 
       expect(mockQueryRunner.query).toHaveBeenCalledWith('SET TRANSACTION READ ONLY');
     });
@@ -317,14 +317,14 @@ describe('改进版事务装饰器测试', () => {
           propagation: 'NOT_SUPPORTED'
         };
 
-        return await transactionAspect.run([innerOptions], innerProceed);
+        return await transactionAspect.run([], innerProceed, innerOptions);
       });
 
       const outerOptions: TransactionOptions = {
         propagation: 'REQUIRED'
       };
 
-      const result = await transactionAspect.run([outerOptions], outerProceed);
+      const result = await transactionAspect.run([], outerProceed, outerOptions);
       expect(result).toBe('not-supported-result');
     });
 
@@ -346,14 +346,14 @@ describe('改进版事务装饰器测试', () => {
           propagation: 'REQUIRES_NEW'
         };
 
-        return await transactionAspect.run([innerOptions], innerProceed);
+        return await transactionAspect.run([], innerProceed, innerOptions);
       });
 
       const outerOptions: TransactionOptions = {
         propagation: 'REQUIRED'
       };
 
-      const result = await transactionAspect.run([outerOptions], outerProceed);
+      const result = await transactionAspect.run([], outerProceed, outerOptions);
       expect(result).toBe('requires-new-result');
 
       // 验证创建了新的事务上下文
@@ -383,7 +383,7 @@ describe('改进版事务装饰器测试', () => {
 
       const startTime = Date.now();
 
-      await expect(transactionAspect.run([options], mockProceed))
+      await expect(transactionAspect.run([], mockProceed, options))
         .rejects.toThrow(/Transaction timeout after \d+ms/);
 
       const actualTime = Date.now() - startTime;
@@ -428,7 +428,7 @@ describe('改进版事务装饰器测试', () => {
         name: 'tool-functions-test'
       };
 
-      const result = await transactionAspect.run([options], mockProceed);
+      const result = await transactionAspect.run([], mockProceed, options);
       expect(result).toBe('tool-functions-result');
     });
 
@@ -453,8 +453,8 @@ describe('改进版事务装饰器测试', () => {
       const mockProceed = jest.fn();
       const options: TransactionOptions = {};
 
-      await expect(transactionAspect.run([options], mockProceed))
-        .rejects.toThrow("数据源 'DB' 未找到或未初始化");
+      await expect(transactionAspect.run([], mockProceed, options))
+        .rejects.toThrow("Data source 'DB' not found or not initialized");
     });
 
     it('应该处理自定义数据源', async () => {
@@ -474,7 +474,7 @@ describe('改进版事务装饰器测试', () => {
         dataSourceName: 'CUSTOM_DB'
       };
 
-      const result = await transactionAspect.run([options], mockProceed);
+      const result = await transactionAspect.run([], mockProceed, options);
       expect(result).toBe('custom-result');
       expect(transactionAspect.app.getMetaData).toHaveBeenCalledWith('CUSTOM_DB');
     });
@@ -488,7 +488,7 @@ describe('改进版事务装饰器测试', () => {
       const mockProceed = jest.fn();
       const options: TransactionOptions = {};
 
-      await expect(transactionAspect.run([options], mockProceed))
+      await expect(transactionAspect.run([], mockProceed, options))
         .rejects.toThrow('Connection failed');
     });
 
@@ -501,7 +501,7 @@ describe('改进版事务装饰器测试', () => {
       const mockProceed = jest.fn();
       const options: TransactionOptions = {};
 
-      await expect(transactionAspect.run([options], mockProceed))
+      await expect(transactionAspect.run([], mockProceed, options))
         .rejects.toThrow('Start transaction failed');
     });
 
@@ -514,7 +514,7 @@ describe('改进版事务装饰器测试', () => {
       const mockProceed = jest.fn().mockResolvedValue('result');
       const options: TransactionOptions = {};
 
-      await expect(transactionAspect.run([options], mockProceed))
+      await expect(transactionAspect.run([], mockProceed, options))
         .rejects.toThrow('Commit failed');
     });
 
@@ -528,7 +528,7 @@ describe('改进版事务装饰器测试', () => {
       const options: TransactionOptions = {};
 
       // 应该抛出原始错误，而不是回滚错误
-      await expect(transactionAspect.run([options], mockProceed))
+      await expect(transactionAspect.run([], mockProceed, options))
         .rejects.toThrow('Original error');
     });
   });
