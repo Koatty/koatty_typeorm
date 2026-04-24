@@ -1,5 +1,40 @@
 # Changelog
 
+## 1.5.0
+
+### Minor Changes
+
+- build
+- build
+
+### Patch Changes
+
+- Updated dependencies
+- Updated dependencies
+  - koatty_core@2.2.0
+  - koatty_container@3.0.0
+  - koatty_lib@1.5.0
+  - koatty_logger@3.0.0
+
+## 1.4.9
+
+### Patch Changes
+
+- build
+- Phase 1: Critical bug fixes
+  - **koatty-container**: Replace global.**KOATTY_IOC** with Symbol.for to prevent global namespace pollution (TASK-1-7)
+  - **koatty-logger**: Fix incorrect log level mapping - warning should map to warn, not error (TASK-1-5)
+  - **koatty-typeorm**: Remove hardcoded database credentials security vulnerability (TASK-1-3)
+  - **koatty-typeorm**: Fix incorrect TypeORM event name 'Stop' -> 'beforeServerStop' (TASK-1-4)
+
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - koatty_container@2.0.9
+  - koatty_core@2.1.10
+  - koatty_lib@1.4.9
+  - koatty_logger@2.8.5
+
 ## 1.4.8
 
 ### Patch Changes
