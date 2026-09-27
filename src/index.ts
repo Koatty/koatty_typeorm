@@ -51,7 +51,8 @@ const defaultOptions: any = {
   port: 3306,
 
   synchronize: false, //true entities will be synchronized with database every time application runs
-  logging: true,
+  // SEC-11: In production only log errors by default to avoid leaking sensitive data through query logs
+  logging: process.env.NODE_ENV === "production" ? ["error"] : true,
   entities: [`${process.env.APP_PATH}/model/*`],
   entityPrefix: "", //Table prefix
   timezone: "Z" // Timezone. Recommended to set database timezone: set global time_zone = '+8:00'; set time_zone = '+8:00';

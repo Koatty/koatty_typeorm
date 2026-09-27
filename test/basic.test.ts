@@ -85,7 +85,7 @@ describe('基本功能测试', () => {
       
       expect(() => {
         validateDatabaseOptions({} as DataSourceOptions);
-      }).toThrow('数据库类型 (type) 是必需的');
+      }).toThrow('Database type (type) is required');
     });
 
     it('应该验证 MySQL 连接信息', () => {
@@ -96,7 +96,7 @@ describe('基本功能测试', () => {
           type: 'mysql',
           database: 'test'
         } as DataSourceOptions);
-      }).toThrow('数据库主机 (host) 或连接字符串 (url) 是必需的');
+      }).toThrow('Database host or connection string (url) is required');
     });
 
     it('应该允许 SQLite 不需要主机信息', () => {

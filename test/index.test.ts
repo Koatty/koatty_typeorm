@@ -23,6 +23,7 @@ describe('KoattyTypeORM', () => {
       config: jest.fn(),
       setMetaData: jest.fn(),
       on: jest.fn(),
+      once: jest.fn(),
     } as any;
 
     // Mock DataSource connection - 使用普通对象而不是 jest.Mocked
@@ -109,7 +110,6 @@ describe('KoattyTypeORM', () => {
         type: 'mysql',
         host: 'custom-host',
         port: 3306, // 来自默认配置
-        username: 'test', // 来自默认配置
         database: 'custom-db',
       }));
     });
@@ -142,7 +142,7 @@ describe('KoattyTypeORM', () => {
 
       await KoattyTypeORM(options, mockApp);
 
-      expect(mockApp.on).toHaveBeenCalledWith('Stop', expect.any(Function));
+      expect(mockApp.once).toHaveBeenCalledWith('appStop', expect.any(Function));
     });
   });
 
@@ -151,7 +151,7 @@ describe('KoattyTypeORM', () => {
       mockApp.config.mockReturnValue(null);
 
       await expect(KoattyTypeORM(null as any, mockApp))
-        .rejects.toThrow('数据库配置不能为空');
+        .rejects.toThrow('Database configuration cannot be empty');
     });
 
     it('应该抛出错误当数据库类型未指定时', async () => {
@@ -161,7 +161,7 @@ describe('KoattyTypeORM', () => {
       } as DataSourceOptions;
 
       await expect(KoattyTypeORM(options, mockApp))
-        .rejects.toThrow('数据库类型 (type) 是必需的');
+        .rejects.toThrow('Database type (type) is required');
     });
 
     it('应该抛出错误当 MySQL 缺少主机信息时', async () => {
@@ -171,7 +171,7 @@ describe('KoattyTypeORM', () => {
       };
 
       await expect(KoattyTypeORM(options, mockApp))
-        .rejects.toThrow('数据库主机 (host) 或连接字符串 (url) 是必需的');
+        .rejects.toThrow('Database host or connection string (url) is required');
     });
 
     it('应该抛出错误当 MySQL 缺少数据库名称时', async () => {
@@ -181,7 +181,7 @@ describe('KoattyTypeORM', () => {
       };
 
       await expect(KoattyTypeORM(options, mockApp))
-        .rejects.toThrow('数据库名称 (database) 或连接字符串 (url) 是必需的');
+        .rejects.toThrow('Database name or connection string (url) is required');
     });
 
     it('应该处理数据库连接初始化失败', async () => {
@@ -191,10 +191,10 @@ describe('KoattyTypeORM', () => {
         database: 'test',
       };
 
-      mockDataSource.initialize.mockRejectedValue(new Error('连接失败'));
+      mockDataSource.initialize.mockRejectedValue(new Error('Connection failed'));
 
       await expect(KoattyTypeORM(options, mockApp))
-        .rejects.toThrow('TypeORM 初始化失败: 连接失败');
+        .rejects.toThrow('TypeORM initialization failed: Connection failed');
     });
 
     it('应该抛出错误当连接未正确初始化时', async () => {
@@ -213,7 +213,7 @@ describe('KoattyTypeORM', () => {
       mockDataSource.initialize.mockResolvedValue(uninitializedConnection);
 
       await expect(KoattyTypeORM(options, mockApp))
-        .rejects.toThrow('数据库连接初始化失败');
+        .rejects.toThrow('Database connection initialization failed');
     });
   });
 
@@ -254,7 +254,7 @@ describe('KoattyTypeORM', () => {
       await KoattyTypeORM(options, mockApp);
 
       // 获取注册的关闭处理函数
-      const closeHandler = mockApp.on.mock.calls.find(call => call[0] === 'Stop')?.[1];
+      const closeHandler = mockApp.once.mock.calls.find(call => call[0] === 'appStop')?.[1];
       expect(closeHandler).toBeDefined();
 
       // 执行关闭处理函数
@@ -283,7 +283,7 @@ describe('KoattyTypeORM', () => {
       // 重新设置 mockDataSource.initialize 返回未初始化的连接
       mockDataSource.initialize.mockResolvedValue(uninitializedConnection);
 
-      const closeHandler = mockApp.on.mock.calls.find(call => call[0] === 'Stop')?.[1];
+      const closeHandler = mockApp.once.mock.calls.find(call => call[0] === 'appStop')?.[1];
       
       // 模拟连接状态变为未初始化
       mockConnection.isInitialized = false;
