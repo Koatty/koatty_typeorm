@@ -8,6 +8,7 @@ import { Koatty } from 'koatty_core';
  * 集成测试 - 测试真实场景下的插件行为
  * 注意：这些测试使用真实的 TypeORM 和 Koatty 实例，但使用内存数据库
  */
+// [SKIP-29] requires a real database (integration suite) — tracked in docs/reports/test-baseline-2026-09.md#skip-inventory
 describe.skip('KoattyTypeORM 集成测试', () => {
   let app: Koatty;
   let metaDataStore: Map<string, any>;

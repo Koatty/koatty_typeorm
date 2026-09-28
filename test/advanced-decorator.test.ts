@@ -387,8 +387,11 @@ describe('改进版事务装饰器测试', () => {
         .rejects.toThrow(/Transaction timeout after \d+ms/);
 
       const actualTime = Date.now() - startTime;
+      // 下界证明超时被强制执行；上界仅用于捕获“完全没有超时”的回归，
+      // 必须容忍 turbo 并行运行时的事件循环抖动（旧值 timeout+50 实测抖动到 140ms）；
+      // 精确延迟断言属于 benchmarks（§12.3）
       expect(actualTime).toBeGreaterThanOrEqual(timeout);
-      expect(actualTime).toBeLessThan(timeout + 50); // 允许50ms误差
+      expect(actualTime).toBeLessThan(timeout + 1000);
     });
   });
 

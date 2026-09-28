@@ -12,6 +12,7 @@ import {
   isInTransaction
 } from '../src/decorator';
 
+// [SKIP-30] requires a real database (transaction integration suite) — tracked in docs/reports/test-baseline-2026-09.md#skip-inventory
 describe.skip('事务装饰器集成测试', () => {
   // 模拟服务类
   class UserService {

@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.0.0
+
+### Patch Changes
+
+- Updated dependencies
+  - koatty_core@2.4.0
+  - koatty_logger@3.1.0
+  - koatty_container@4.0.0
+
 ## 2.0.0
 
 ### Minor Changes
@@ -7,7 +16,6 @@
 - Phase B security hardening (koatty-hardening-and-ai-evolution-plan.md, ADR-101/102/103). Fail-closed defaults with a `security.legacyDefaults: true` rollback switch; see docs/migration/4.3.0.md for the full migration guide.
 
   Highlights:
-
   - SecurityProfile (strict/standard/development) exposed read-only as `app.security`, with a startup summary and per-item WARN when rolling back
   - body parsing failures return 400/413/415 instead of silently producing `{}`; body size limit follows the security profile (1mb in production)
   - DTO validation whitelist on by default (strict profile rejects unknown fields); `__proto__`/`constructor` keys never reach DTO instances
@@ -51,7 +59,6 @@
 
 - build
 - Phase 1: Critical bug fixes
-
   - **koatty-container**: Replace global.**KOATTY_IOC** with Symbol.for to prevent global namespace pollution (TASK-1-7)
   - **koatty-logger**: Fix incorrect log level mapping - warning should map to warn, not error (TASK-1-5)
   - **koatty-typeorm**: Remove hardcoded database credentials security vulnerability (TASK-1-3)
