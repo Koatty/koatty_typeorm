@@ -51,7 +51,7 @@ describe('KLogger', () => {
 
       logger.logQuery(query, parameters);
 
-      expect(DefaultLogger.Info).toHaveBeenCalledWith(query, parameters);
+      expect(DefaultLogger.Info).toHaveBeenCalledWith(query, ['***', '***']);
     });
 
     it('应该不记录查询日志当 logging 为 false 时', () => {
@@ -84,7 +84,7 @@ describe('KLogger', () => {
 
       logger.logQueryError(error, query, parameters);
 
-      expect(DefaultLogger.Error).toHaveBeenCalledWith(query, parameters, error);
+      expect(DefaultLogger.Error).toHaveBeenCalledWith(query, ['***'], error);
     });
 
     it('应该处理字符串错误', () => {
@@ -121,7 +121,7 @@ describe('KLogger', () => {
       expect(DefaultLogger.Warn).toHaveBeenCalledWith(
         'QuerySlow',
         query,
-        parameters,
+        ['***'],
         'execution time:',
         time
       );

@@ -136,7 +136,8 @@ describe('SEC-11: TypeORM logging defaults and query parameter masking', () => {
       expect(serialized).not.toContain('key-xyz');
       // non-sensitive values remain visible
       expect(serialized).toContain('bob');
-      expect(serialized).toContain('plain-value');
+      // Positional parameters cannot be mapped safely to field names.
+      expect(serialized).not.toContain('plain-value');
       expect(serialized).toContain('***');
     });
 

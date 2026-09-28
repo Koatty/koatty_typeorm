@@ -73,7 +73,12 @@ export function sanitizeLogParams(parameters?: any[]): any[] | undefined {
   if (!parameters || !Array.isArray(parameters)) {
     return parameters;
   }
-  return parameters.map((param) => sanitizeParamValue(param, undefined, 0));
+  // Positional values have no trustworthy column names. Never log them.
+  return parameters.map((param) =>
+    param && Object.getPrototypeOf(param) === Object.prototype
+      ? sanitizeParamValue(param, undefined, 0)
+      : MASK_VALUE
+  );
 }
 
 /**
@@ -102,8 +107,13 @@ export class KLogger implements Logger {
    * @param {QueryRunner} [queryRunner]
    * @memberof KLogger
    */
+  private enabled(level: string): boolean {
+    const logging = this.options.logging;
+    return logging === true || logging === 'all' || (Array.isArray(logging) && (logging as string[]).includes(level));
+  }
+
   logQuery(query: string, parameters?: any[], _queryRunner?: QueryRunner) {
-    if (this.options.logging) {
+    if (this.enabled('query')) {
       DefaultLogger.Info(query, sanitizeLogParams(parameters));
     }
   }
@@ -118,7 +128,7 @@ export class KLogger implements Logger {
    * @memberof KLogger
    */
   logQueryError(error: string | Error, query: string, parameters?: any[], _queryRunner?: QueryRunner) {
-    if (this.options.logging) {
+    if (this.enabled('error')) {
       DefaultLogger.Error(query, sanitizeLogParams(parameters), error);
     }
   }
@@ -133,7 +143,7 @@ export class KLogger implements Logger {
    * @memberof KLogger
    */
   logQuerySlow(time: number, query: string, parameters?: any[], _queryRunner?: QueryRunner) {
-    if (this.options.logging) {
+    if (this.enabled('warn')) {
       DefaultLogger.Warn("QuerySlow", query, sanitizeLogParams(parameters), "execution time:", time);
     }
   }
@@ -146,7 +156,7 @@ export class KLogger implements Logger {
    * @memberof KLogger
    */
   logSchemaBuild(message: string, _queryRunner?: QueryRunner) {
-    if (this.options.logging) {
+    if (this.enabled('schema')) {
       DefaultLogger.Info(message);
     }
   }
@@ -159,7 +169,7 @@ export class KLogger implements Logger {
    * @memberof KLogger
    */
   logMigration(message: string, _queryRunner?: QueryRunner) {
-    if (this.options.logging) {
+    if (this.enabled('migration')) {
       DefaultLogger.Info(message);
     }
   }
@@ -173,7 +183,7 @@ export class KLogger implements Logger {
    * @memberof KLogger
    */
   log(level: "log" | "info" | "warn", message: any, _queryRunner?: QueryRunner) {
-    if (!this.options.logging) {
+    if (!this.enabled(level)) {
       return;
     }
 
