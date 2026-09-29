@@ -521,16 +521,11 @@ export class TransactionAspect implements IAspect {
         await options.hooks.beforeCommit();
       }
 
-      // 设置超时处理
-      const timeoutPromise = this.createTimeoutPromise(options.timeout, contextId);
-
       try {
         // 在事务上下文中执行
         const resultPromise = TransactionManager.runInContext(context, proceed);
         
-        const result = options.timeout
-          ? await Promise.race([resultPromise, timeoutPromise])
-          : await resultPromise;
+        const result = await this.withTimeout(resultPromise, options.timeout, contextId);
 
         // 提交事务
         await queryRunner.commitTransaction();
@@ -597,20 +592,24 @@ export class TransactionAspect implements IAspect {
     }
   }
 
-  /**
-   * 创建超时Promise
-   */
-  private createTimeoutPromise(timeout?: number, contextId?: string): Promise<never> {
-    if (!timeout || timeout <= 0) {
-      return new Promise(() => { /* 永不resolve的Promise */ }); 
+  /** Run the transaction body with a deadline and release its timer on every outcome. */
+  private async withTimeout<T>(result: Promise<T>, timeout?: number, contextId?: string): Promise<T> {
+    if (!timeout || timeout <= 0) return result;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      return await Promise.race([
+        result,
+        new Promise<never>((_, reject) => {
+          timer = setTimeout(() => {
+            reject(new Error(`Transaction timeout after ${timeout}ms (context: ${contextId})`));
+          }, timeout);
+        })
+      ]);
+    } finally {
+      if (timer !== undefined) clearTimeout(timer);
     }
-
-    return new Promise((_, reject) => {
-      setTimeout(() => {
-        reject(new Error(`Transaction timeout after ${timeout}ms (context: ${contextId})`));
-      }, timeout);
-    });
   }
+
 }
 
 /**

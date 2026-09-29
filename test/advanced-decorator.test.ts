@@ -259,7 +259,7 @@ describe('改进版事务装饰器测试', () => {
         }
 
         return 'outer-continues';
-      };
+      });
 
       const outerOptions: TransactionOptions = {
         propagation: 'REQUIRED',

@@ -67,6 +67,12 @@ describe('SEC-11: TypeORM logging defaults and query parameter masking', () => {
     return { ctorOptions, connection, mockApp };
   }
 
+  it('KOATTY_ENV production overrides NODE_ENV development', async () => {
+    const previous = process.env.KOATTY_ENV;
+    try { process.env.KOATTY_ENV = 'production'; const { ctorOptions } = await initInEnv('development', { type: 'mysql', host: 'localhost', database: 'fixture' }); expect(ctorOptions.logging).toEqual(['error']); }
+    finally { if (previous === undefined) delete process.env.KOATTY_ENV; else process.env.KOATTY_ENV = previous; }
+  });
+
   describe('default logging option (SEC-11)', () => {
     it('defaults logging to ["error"] when NODE_ENV is production', async () => {
       const { ctorOptions } = await initInEnv('production', {

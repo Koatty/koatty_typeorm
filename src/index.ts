@@ -6,7 +6,7 @@
  * @LastEditTime: 2023-12-24 15:03:45
  */
 import { Helper } from "koatty_lib";
-import { Koatty, AppEvent } from "koatty_core";
+import { Koatty, AppEvent, resolveProfileName } from "koatty_core";
 import { KLogger } from "./logger";
 import { DataSource, DataSourceOptions } from "typeorm";
 import { DefaultLogger as Logger } from "koatty_logger";
@@ -52,7 +52,7 @@ const defaultOptions: any = {
 
   synchronize: false, //true entities will be synchronized with database every time application runs
   // SEC-11: In production only log errors by default to avoid leaking sensitive data through query logs
-  logging: process.env.NODE_ENV === "production" ? ["error"] : true,
+  logging: false,
   entities: [`${process.env.APP_PATH}/model/*`],
   entityPrefix: "", //Table prefix
   timezone: "Z" // Timezone. Recommended to set database timezone: set global time_zone = '+8:00'; set time_zone = '+8:00';
@@ -92,7 +92,8 @@ export async function KoattyTypeORM(options: DataSourceOptions, app: Koatty): Pr
 
     // Merge configuration options, use any type to avoid type conflicts
     const opt: ExtendedDataSourceOptions = { 
-      ...defaultOptions, 
+      ...defaultOptions,
+      logging: ((app as any)?.security?.name ?? resolveProfileName()) === "strict" ? ["error"] : true,
       ...options 
     };
     
